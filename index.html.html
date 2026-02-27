@@ -1,0 +1,2340 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gayrimenkul Komisyon Hesaplayıcı</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2330;--card:#21262d;
+  --border:#30363d;--border2:#3d444d;--text:#e6edf3;--muted:#7d8590;
+  --blue:#2f81f7;--blue2:#388bfd;--green:#3fb950;--orange:#e3b341;
+  --red:#f85149;--purple:#bc8cff;--lblue:#79c0ff;
+  --grad:linear-gradient(135deg,#2f81f7 0%,#bc8cff 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;}
+.brand-icon{width:30px;height:30px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.wrap{max-width:1400px;margin:0 auto;padding:24px 20px;}
+
+.fb-status{display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);}
+.fb-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:.3s;}
+.fb-dot.connecting{background:var(--orange);animation:pulse 1.2s infinite;}
+.fb-dot.online{background:var(--green);}
+.fb-dot.offline{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:18px;}
+@media(max-width:900px){.stats{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:580px){.stats{grid-template-columns:1fr 1fr;}}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.stat-val{font-size:18px;font-weight:700;}
+
+.grid3{display:grid;grid-template-columns:1fr 1fr 0.85fr;gap:16px;margin-bottom:16px;}
+@media(max-width:1080px){.grid3{grid-template-columns:1fr 1fr;}}
+@media(max-width:660px){.grid3{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.chd{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;}
+.chd h3{font-size:13px;font-weight:600;}
+.ci{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+.cbd{padding:15px;}
+
+.fg{margin-bottom:12px;}
+.fg:last-child{margin-bottom:0;}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
+input[type=text],input[type=number],input[type=date],select,textarea{
+  width:100%;padding:7px 10px;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:7px;color:var(--text);font-size:13px;transition:.15s;font-family:inherit;color-scheme:dark;
+}
+textarea{resize:vertical;min-height:56px;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,129,247,.12);}
+select option{background:var(--bg3);color:var(--text);}
+input[readonly]{opacity:.5;cursor:not-allowed;}
+.cur-wrap{position:relative;}
+.cur-sym{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none;font-weight:600;}
+.cur-wrap input{padding-left:22px;}
+
+.seg{display:flex;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;padding:3px;gap:2px;}
+.seg input{display:none;}
+.seg label{flex:1;text-align:center;padding:5px 6px;border-radius:5px;cursor:pointer;font-size:12px;color:var(--muted);transition:.15s;margin:0;text-transform:none;letter-spacing:0;font-weight:500;}
+.seg input:checked+label{background:var(--blue);color:#fff;}
+.seg.side-seg input[value=buyer]:checked+label{background:var(--green);}
+.seg.side-seg input[value=seller]:checked+label{background:var(--blue);}
+
+.twin{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.cbox{background:var(--bg2);border:1px solid var(--border2);border-radius:9px;padding:11px;}
+.ctitle{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px;display:flex;align-items:center;gap:5px;}
+.cbox.buyer .ctitle{color:var(--green);}
+.cbox.seller .ctitle{color:var(--blue);}
+.csingle{background:var(--bg2);border:1px solid var(--border2);border-radius:9px;padding:11px;}
+.csingle .ctitle{color:var(--orange);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px;display:flex;align-items:center;gap:5px;}
+
+/* ── DIŞ DANIŞMAN TOGGLE (taraf bazlı) ── */
+.ext-side-toggle{
+  display:flex;align-items:center;gap:7px;cursor:pointer;
+  margin-top:9px;padding:6px 8px;border-radius:6px;
+  background:rgba(227,179,65,.06);border:1px solid rgba(227,179,65,.18);
+  user-select:none;transition:.15s;
+}
+.ext-side-toggle:hover{background:rgba(227,179,65,.13);}
+.ext-side-toggle.active{background:rgba(227,179,65,.12);border-color:rgba(227,179,65,.4);}
+.ext-toggle-box{width:15px;height:15px;border-radius:3px;border:2px solid var(--border2);background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;}
+.ext-toggle-box.on{background:var(--orange);border-color:var(--orange);}
+.ext-toggle-lbl{font-size:11px;color:var(--muted);font-weight:500;}
+
+/* ── DIŞ DANIŞMAN PANELİ (slide-down) ── */
+.ext-side-panel{
+  max-height:0;overflow:hidden;
+  transition:max-height .3s ease, opacity .3s ease, margin .3s ease;
+  opacity:0;margin-top:0;
+}
+.ext-side-panel.open{max-height:220px;opacity:1;margin-top:8px;}
+.ext-side-panel-inner{
+  background:rgba(227,179,65,.05);
+  border:1px solid rgba(227,179,65,.22);
+  border-radius:8px;padding:10px;
+}
+.ext-side-panel-inner .seg input:checked+label{background:var(--orange);}
+
+/* ── KDV TOGGLE ── */
+.kdv-btn{display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:8px;padding:5px 8px;border-radius:6px;background:rgba(227,179,65,.07);border:1px solid rgba(227,179,65,.2);user-select:none;}
+.kdv-btn:hover{background:rgba(227,179,65,.14);}
+.kbox{width:15px;height:15px;border-radius:3px;border:2px solid var(--border2);background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;}
+.kbox.on{background:var(--orange);border-color:var(--orange);}
+.klbl{font-size:11px;color:var(--muted);}
+
+.sc-list{display:flex;flex-direction:column;gap:5px;}
+.sc-item input{display:none;}
+.sc-item label{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;transition:.15s;margin:0;text-transform:none;letter-spacing:0;font-weight:400;color:var(--text);}
+.sc-item label:hover{border-color:var(--blue);}
+.sc-item input:checked+label{border-color:var(--blue);background:rgba(47,129,247,.09);}
+.rdot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;margin-top:3px;display:flex;align-items:center;justify-content:center;transition:.15s;}
+.sc-item input:checked+label .rdot{border-color:var(--blue);background:var(--blue);}
+.sc-item input:checked+label .rdot::after{content:'';width:5px;height:5px;border-radius:50%;background:#fff;}
+.stxt strong{display:block;font-size:13px;font-weight:600;margin-bottom:1px;}
+.stxt span{font-size:11px;color:var(--muted);}
+.cpanel{background:rgba(47,129,247,.05);border:1px solid rgba(47,129,247,.2);border-radius:8px;padding:11px;margin-top:7px;display:none;}
+.cpanel.on{display:block;}
+
+.kapora-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:7px 9px;border-radius:7px;background:rgba(188,140,255,.07);border:1px solid rgba(188,140,255,.22);user-select:none;margin-bottom:8px;}
+.kapora-toggle:hover{background:rgba(188,140,255,.14);}
+.kap-box{width:15px;height:15px;border-radius:3px;border:2px solid var(--border2);background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;}
+.kap-box.on{background:var(--purple);border-color:var(--purple);}
+.kapora-panel{background:rgba(188,140,255,.06);border:1px solid rgba(188,140,255,.22);border-radius:9px;padding:13px;display:none;}
+.kapora-panel.on{display:block;}
+.kap-info{background:rgba(188,140,255,.08);border:1px solid rgba(188,140,255,.22);border-radius:7px;padding:7px 10px;font-size:11px;color:var(--purple);margin-top:8px;display:flex;gap:6px;align-items:flex-start;}
+
+.btn-row{display:flex;gap:8px;margin-top:13px;}
+.btn{padding:8px 14px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;transition:.15s;}
+.btn-calc{background:var(--blue);color:#fff;flex:1;justify-content:center;}
+.btn-calc:hover{background:var(--blue2);}
+.btn-rst{background:var(--bg2);border:1px solid var(--border2);color:var(--text);}
+.btn-rst:hover{background:var(--bg3);}
+.btn-save{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);color:var(--green);justify-content:center;}
+.btn-save:hover{background:rgba(63,185,80,.18);}
+.btn-pdf{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:var(--red);font-size:12px;padding:7px 12px;}
+.btn-pdf:hover{background:rgba(248,81,73,.2);}
+
+.hint{font-size:11px;color:var(--green);margin-top:3px;min-height:13px;font-weight:600;}
+.info{background:rgba(47,129,247,.08);border:1px solid rgba(47,129,247,.22);border-radius:7px;padding:7px 10px;font-size:11px;color:var(--lblue);margin-top:8px;display:flex;gap:6px;align-items:flex-start;}
+.fb-warn{background:rgba(248,81,73,.07);border:1px solid rgba(248,81,73,.25);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);display:flex;gap:7px;align-items:flex-start;margin-bottom:14px;}
+
+.ext-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;display:none;}
+.ext-card.on{display:block;}
+
+.res-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+.res-empty{text-align:center;padding:34px 20px;color:var(--muted);}
+.res-empty i{font-size:26px;opacity:.3;display:block;margin-bottom:9px;}
+.res-top{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+.res-top.one{grid-template-columns:1fr;}
+.rcol{padding:16px;border-right:1px solid var(--border);}
+.rcol:last-child{border-right:none;}
+@media(max-width:600px){.res-top{grid-template-columns:1fr;}.rcol{border-right:none;border-bottom:1px solid var(--border);}}
+.res-bot{padding:15px 16px;background:rgba(188,140,255,.03);}
+.ctit{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:11px;display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.ctit.buy{color:var(--green);}.ctit.sel{color:var(--blue);}.ctit.ren{color:var(--orange);}.ctit.gnd{color:var(--purple);}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.rrow:last-child{border-bottom:none;}
+.rlbl{font-size:12px;color:var(--muted);}
+.rright{display:flex;align-items:center;gap:6px;}
+.rval{font-size:13px;font-weight:700;}
+.rpct{font-size:10px;font-weight:500;padding:2px 6px;border-radius:20px;}
+.rtotal .rval{color:var(--text);}
+.rmine .rval{color:var(--green);}.rmine .rpct{background:rgba(63,185,80,.12);color:var(--green);}
+.roff .rval{color:var(--blue);}.roff .rpct{background:rgba(47,129,247,.12);color:var(--blue);}
+.rext .rval{color:var(--orange);}.rext .rpct{background:rgba(227,179,65,.12);color:var(--orange);}
+.ggrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;}
+.gi{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;}
+.gi .gl{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.gi .gv{font-size:15px;font-weight:700;}
+.gi .gp{font-size:10px;color:var(--muted);margin-top:2px;}
+.gi.gmine{border-color:rgba(63,185,80,.35);background:rgba(63,185,80,.06);}
+.gi.gmine .gl{color:var(--green);font-weight:600;}.gi.gmine .gv{color:var(--green);}
+.gi.goff{border-color:rgba(47,129,247,.3);background:rgba(47,129,247,.05);}
+.gi.goff .gl{color:var(--blue);font-weight:600;}.gi.goff .gv{color:var(--blue);}
+.gi.gkap{border-color:rgba(188,140,255,.35);background:rgba(188,140,255,.06);}
+.gi.gkap .gl{color:var(--purple);font-weight:600;}.gi.gkap .gv{color:var(--purple);}
+.pstrip{padding:9px 16px;background:var(--bg2);border-top:1px solid var(--border);display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.pi{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);}
+.pi span{color:var(--text);font-weight:500;}
+
+/* ── MODAL BASE ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.dn{display:none;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:860px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.5);}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);}
+.modal-head h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.modal-body{padding:0;overflow-y:auto;flex:1;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:space-between;align-items:center;background:var(--bg2);}
+.close-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px;}
+.close-btn:hover{color:var(--text);}
+
+/* ── PDF MODAL TABS ── */
+.pdf-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg2);padding:0 20px;gap:2px;}
+.pdf-tab{padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;}
+.pdf-tab:hover{color:var(--text);}
+.pdf-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.pdf-tab-panel{display:none;padding:20px;}
+.pdf-tab-panel.active{display:block;}
+
+/* ── RAPOR MODU SEÇİCİ ── */
+.rmod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px;}
+@media(max-width:600px){.rmod-grid{grid-template-columns:1fr 1fr;}}
+.rmod-card{position:relative;cursor:pointer;}
+.rmod-card input{display:none;}
+.rmod-label{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:11px 12px;background:var(--bg2);border:1px solid var(--border2);border-radius:9px;cursor:pointer;transition:.15s;}
+.rmod-label:hover{border-color:var(--blue);}
+.rmod-card input:checked+.rmod-label{border-color:var(--blue);background:rgba(47,129,247,.1);}
+.rmod-icon{font-size:18px;margin-bottom:2px;}
+.rmod-title{font-size:12px;font-weight:700;color:var(--text);}
+.rmod-desc{font-size:10px;color:var(--muted);line-height:1.4;}
+.rmod-card input:checked+.rmod-label .rmod-title{color:var(--blue);}
+
+/* ── ŞUBE / AJANS BİLGİLERİ ── */
+.agency-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.agency-field label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+
+/* ── TARİH FİLTRE ── */
+.date-filter-row{display:flex;gap:9px;align-items:flex-end;margin-bottom:16px;}
+.date-filter-row .fg{margin-bottom:0;flex:1;}
+.df-quick{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;}
+.df-chip{padding:4px 10px;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;transition:.15s;color:var(--muted);}
+.df-chip:hover,.df-chip.active{background:rgba(47,129,247,.15);border-color:var(--blue);color:var(--blue);}
+
+/* ── İŞLEM LİSTESİ ── */
+.rpt-list{display:flex;flex-direction:column;gap:5px;max-height:260px;overflow-y:auto;padding-right:4px;}
+.rpt-item{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;transition:.15s;user-select:none;cursor:pointer;}
+.rpt-item:hover{border-color:var(--blue);}
+.rpt-item input[type=checkbox]{width:15px;height:15px;accent-color:var(--blue);cursor:pointer;flex-shrink:0;pointer-events:none;}
+.rpt-item-info{flex:1;pointer-events:none;min-width:0;}
+.rpt-item-info strong{display:block;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rpt-item-info span{font-size:10px;color:var(--muted);}
+.rpt-item-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0;}
+.rpt-sel-all{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);cursor:pointer;margin-bottom:8px;padding:5px 7px;border-radius:6px;}
+.rpt-sel-all:hover{background:var(--bg2);}
+.rpt-sel-all input{width:14px;height:14px;accent-color:var(--blue);}
+.rpt-count-badge{background:rgba(47,129,247,.15);color:var(--blue);font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:auto;}
+
+/* ── BÖLÜM SEÇENEKLERİ ── */
+.section-opts{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px;}
+.sect-item{display:flex;align-items:center;gap:7px;padding:8px 10px;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:12px;transition:.15s;}
+.sect-item:hover{border-color:var(--purple);}
+.sect-item input{width:14px;height:14px;accent-color:var(--purple);pointer-events:none;}
+.sect-item.checked{border-color:rgba(188,140,255,.4);background:rgba(188,140,255,.07);}
+.sect-icon{font-size:14px;flex-shrink:0;}
+
+/* ── PREVIEW BADGE ── */
+.preview-bar{background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.2);border-radius:8px;padding:9px 13px;font-size:11px;color:var(--green);display:flex;gap:8px;align-items:center;}
+
+/* ── OPT ROW (reuse) ── */
+.opt-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;}
+.opt-row:last-child{margin-bottom:0;}
+.opt-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--blue);}
+
+.hist-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.twrap{overflow-x:auto;overflow-y:auto;max-height:380px;}
+table{width:100%;border-collapse:collapse;}
+thead th{position:sticky;top:0;z-index:2;background:var(--bg2);padding:8px 11px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;border-bottom:1px solid var(--border);}
+tbody td{padding:8px 11px;border-bottom:1px solid var(--border);font-size:12px;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(255,255,255,.02);}
+.tg{color:var(--green);font-weight:600;}
+.tb{color:var(--blue);font-weight:600;}
+.to{color:var(--orange);}
+.tp{color:var(--purple);font-weight:600;}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:500;}
+.b-satis{background:rgba(47,129,247,.15);color:var(--blue);}
+.b-kira{background:rgba(227,179,65,.15);color:var(--orange);}
+.b-prop{background:rgba(188,140,255,.12);color:var(--purple);}
+.ibtn{background:transparent;border:1px solid var(--border2);color:var(--muted);padding:4px 7px;border-radius:5px;cursor:pointer;font-size:11px;transition:.15s;}
+.ibtn:hover{border-color:var(--blue);color:var(--blue);}
+.ibtn.del:hover{border-color:var(--red);color:var(--red);}
+.empty{padding:36px 20px;text-align:center;color:var(--muted);}
+.empty i{font-size:26px;opacity:.28;display:block;margin-bottom:9px;}
+.dn{display:none!important;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><div class="brand-icon">🏠</div>Gayrimenkul Komisyon Hesaplayıcı</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div id="kurStrip" style="font-size:11px;color:var(--muted);display:flex;gap:10px;align-items:center">
+      <span id="kurUSD" style="color:var(--lblue)"><i class="fas fa-spinner fa-spin" style="font-size:9px"></i> USD yükleniyor...</span>
+      <span id="kurEUR" style="color:var(--purple)"></span>
+      <span id="kurTime" style="font-size:10px;opacity:.5"></span>
+    </div>
+    <div class="fb-status" id="fbStatus">
+      <div class="fb-dot connecting" id="fbDot"></div>
+      <span id="fbTxt" style="color:var(--muted)">Bulut bağlanıyor...</span>
+    </div>
+    <button class="btn btn-pdf" onclick="openPdfModal()"><i class="fas fa-file-pdf"></i> PDF Rapor</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<div class="fb-warn dn" id="fbWarnEl">
+  <i class="fas fa-triangle-exclamation" style="flex-shrink:0;margin-top:1px"></i>
+  <span id="fbWarnTxt">Firebase bağlantısı kurulamadı. Veriler yalnızca bu tarayıcıda (localStorage) saklanıyor.</span>
+</div>
+
+<div class="stats dn" id="statsEl">
+  <div class="stat"><div class="stat-lbl">Toplam İşlem</div><div class="stat-val" id="stCount">0</div></div>
+  <div class="stat"><div class="stat-lbl">Satış / Kira (₺)</div><div class="stat-val" id="stSales">₺0</div></div>
+  <div class="stat"><div class="stat-lbl">Toplam Komisyon (₺)</div><div class="stat-val" id="stComm">₺0</div></div>
+  <div class="stat"><div class="stat-lbl">Ofise Kalan (₺)</div><div class="stat-val" id="stOff" style="color:var(--blue)">₺0</div></div>
+  <div class="stat"><div class="stat-lbl">Bana Kalan Net (₺)</div><div class="stat-val" id="stMine" style="color:var(--green)">₺0</div></div>
+</div>
+
+<div id="editBanner" class="dn" style="background:rgba(227,179,65,.1);border:1px solid rgba(227,179,65,.35);border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <i class="fas fa-pen" style="color:var(--orange);font-size:13px"></i>
+    <span style="font-size:13px;font-weight:600;color:var(--orange)">Düzenleme Modu</span>
+    <span id="editBannerName" style="font-size:12px;color:var(--muted)"></span>
+  </div>
+  <button class="btn btn-rst" onclick="cancelEdit()" style="font-size:12px;padding:5px 11px;"><i class="fas fa-xmark"></i> İptal</button>
+</div>
+
+<div class="grid3">
+
+<!-- KART 1: MÜLK & MÜŞTERİ -->
+<div class="card">
+  <div class="chd"><div class="ci" style="background:rgba(47,129,247,.15);color:var(--blue)"><i class="fas fa-building"></i></div><h3>Mülk & Müşteri</h3></div>
+  <div class="cbd">
+    <div class="r2">
+      <div class="fg"><label>Müşteri Adı</label><input type="text" id="cName" placeholder="Ahmet Yılmaz"/></div>
+      <div class="fg"><label>Telefon</label><input type="text" id="cPhone" placeholder="0532 000 00 00"/></div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>İşlem Tarihi</label><input type="date" id="txDate"/></div>
+      <div class="fg"><label>İşlem Türü</label>
+        <select id="txType" onchange="onTx()">
+          <option value="satis">Satış</option>
+          <option value="kiralama">Kiralama</option>
+        </select>
+      </div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>Mülk Cinsi</label>
+        <select id="propType">
+          <option value="daire">Daire</option><option value="arsa">Arsa</option>
+          <option value="villa">Villa</option><option value="dukkan">Dükkan</option>
+          <option value="ofis">Ofis</option><option value="diger">Diğer</option>
+        </select>
+      </div>
+      <div class="fg"><label id="saLabel">Satış / Kira Bedeli</label>
+        <div class="r2" style="gap:5px">
+          <select id="saleCur" onchange="updateSymbols()" style="width:70px;flex:none;padding:7px 5px;">
+            <option value="TL">₺ TL</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option>
+          </select>
+          <div class="cur-wrap" style="flex:1">
+            <span class="cur-sym" id="saSym">₺</span>
+            <input type="number" id="saleAmt" placeholder="0" min="0" step="1000" oninput="hint('saleAmt','saHint','saleCur');onSaleChange()"/>
+          </div>
+        </div>
+        <div class="hint" id="saHint"></div>
+      </div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>Semt / İlçe</label><input type="text" id="locD" placeholder="Kadıköy"/></div>
+      <div class="fg"><label>İl / Şehir</label><input type="text" id="locC" placeholder="İstanbul"/></div>
+    </div>
+    <div class="fg"><label>Açıklama</label><textarea id="descTxt" placeholder="İşleme dair notlar..."></textarea></div>
+  </div>
+</div>
+
+<!-- KART 2: HİZMET BEDELLERİ -->
+<div class="card">
+  <div class="chd"><div class="ci" style="background:rgba(63,185,80,.15);color:var(--green)"><i class="fas fa-coins"></i></div><h3>Hizmet Bedelleri</h3></div>
+  <div class="cbd">
+
+    <!-- SATIŞ MODU -->
+    <div id="modeSatis">
+      <div class="twin">
+
+        <!-- ALICI KUTUSU -->
+        <div class="cbox buyer">
+          <div class="ctitle"><i class="fas fa-user-check"></i> Alıcı</div>
+          <div class="fg"><label>Tür</label>
+            <div class="seg">
+              <input type="radio" name="btType" id="btAmt" value="amount" checked onchange="el('btLbl').textContent='Tutar'">
+              <label for="btAmt">Tutar</label>
+              <input type="radio" name="btType" id="btPct" value="pct" onchange="el('btLbl').textContent='Oran (%)'">
+              <label for="btPct">%</label>
+            </div>
+          </div>
+          <div class="fg">
+            <label id="btLbl">Tutar</label>
+            <div class="r2" style="gap:5px">
+              <select id="bCur" onchange="updateSymbols()" style="width:70px;flex:none;padding:7px 5px;">
+                <option value="TL">₺</option><option value="USD">$</option><option value="EUR">€</option>
+              </select>
+              <div class="cur-wrap" style="flex:1">
+                <span class="cur-sym" id="bSym">₺</span>
+                <input type="number" id="buyerComm" placeholder="0" min="0" oninput="hint('buyerComm','bcHint','bCur')"/>
+              </div>
+            </div>
+            <div class="hint" id="bcHint"></div>
+          </div>
+          <div class="kdv-btn" onclick="toggleKdv('buyer')"><div class="kbox" id="kbBuyer"></div><span class="klbl">%20 KDV ekle</span></div>
+
+          <!-- ► ALIcı: DIŞ DANIŞMAN TOGGLE -->
+          <div class="ext-side-toggle" id="extBuyerToggle" onclick="toggleExtSide('buyer')">
+            <div class="ext-toggle-box" id="extBuyerBox"></div>
+            <span class="ext-toggle-lbl"><i class="fas fa-handshake" style="font-size:10px;margin-right:3px"></i>Bu tarafı başka danışman temsil ediyor</span>
+          </div>
+          <div class="ext-side-panel" id="extBuyerPanel">
+            <div class="ext-side-panel-inner">
+              <div class="fg" style="margin-bottom:8px">
+                <label>Danışman / Ofis Adı</label>
+                <input type="text" id="extBuyerName" placeholder="ABC Emlak, Mehmet Demir..."/>
+              </div>
+              <div class="r2" style="gap:8px">
+                <div class="fg" style="margin-bottom:0">
+                  <label>Pay Türü</label>
+                  <div class="seg" id="extBuyerTypeSeg">
+                    <input type="radio" name="extBuyerType" id="extBuyerTypePct" value="pct" checked>
+                    <label for="extBuyerTypePct">%</label>
+                    <input type="radio" name="extBuyerType" id="extBuyerTypeAmt" value="amount">
+                    <label for="extBuyerTypeAmt">Tutar</label>
+                  </div>
+                </div>
+                <div class="fg" style="margin-bottom:0">
+                  <label>Pay</label>
+                  <input type="number" id="extBuyerVal" placeholder="25" min="0" step="0.5" oninput="extSideHint('buyer')"/>
+                </div>
+              </div>
+              <div class="hint" id="extBuyerHint" style="margin-top:4px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SATICI KUTUSU -->
+        <div class="cbox seller">
+          <div class="ctitle"><i class="fas fa-user-tie"></i> Satıcı</div>
+          <div class="fg"><label>Tür</label>
+            <div class="seg">
+              <input type="radio" name="stType" id="stAmt" value="amount" checked onchange="el('stLbl').textContent='Tutar'">
+              <label for="stAmt">Tutar</label>
+              <input type="radio" name="stType" id="stPct" value="pct" onchange="el('stLbl').textContent='Oran (%)'">
+              <label for="stPct">%</label>
+            </div>
+          </div>
+          <div class="fg">
+            <label id="stLbl">Tutar</label>
+            <div class="r2" style="gap:5px">
+              <select id="sCur" onchange="updateSymbols()" style="width:70px;flex:none;padding:7px 5px;">
+                <option value="TL">₺</option><option value="USD">$</option><option value="EUR">€</option>
+              </select>
+              <div class="cur-wrap" style="flex:1">
+                <span class="cur-sym" id="sSym">₺</span>
+                <input type="number" id="sellerComm" placeholder="0" min="0" oninput="hint('sellerComm','scHint','sCur')"/>
+              </div>
+            </div>
+            <div class="hint" id="scHint"></div>
+          </div>
+          <div class="kdv-btn" onclick="toggleKdv('seller')"><div class="kbox" id="kbSeller"></div><span class="klbl">%20 KDV ekle</span></div>
+
+          <!-- ► SATICI: DIŞ DANIŞMAN TOGGLE -->
+          <div class="ext-side-toggle" id="extSellerToggle" onclick="toggleExtSide('seller')">
+            <div class="ext-toggle-box" id="extSellerBox"></div>
+            <span class="ext-toggle-lbl"><i class="fas fa-handshake" style="font-size:10px;margin-right:3px"></i>Bu tarafı başka danışman temsil ediyor</span>
+          </div>
+          <div class="ext-side-panel" id="extSellerPanel">
+            <div class="ext-side-panel-inner">
+              <div class="fg" style="margin-bottom:8px">
+                <label>Danışman / Ofis Adı</label>
+                <input type="text" id="extSellerName" placeholder="ABC Emlak, Mehmet Demir..."/>
+              </div>
+              <div class="r2" style="gap:8px">
+                <div class="fg" style="margin-bottom:0">
+                  <label>Pay Türü</label>
+                  <div class="seg" id="extSellerTypeSeg">
+                    <input type="radio" name="extSellerType" id="extSellerTypePct" value="pct" checked>
+                    <label for="extSellerTypePct">%</label>
+                    <input type="radio" name="extSellerType" id="extSellerTypeAmt" value="amount">
+                    <label for="extSellerTypeAmt">Tutar</label>
+                  </div>
+                </div>
+                <div class="fg" style="margin-bottom:0">
+                  <label>Pay</label>
+                  <input type="number" id="extSellerVal" placeholder="25" min="0" step="0.5" oninput="extSideHint('seller')"/>
+                </div>
+              </div>
+              <div class="hint" id="extSellerHint" style="margin-top:4px"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /twin -->
+    </div><!-- /modeSatis -->
+
+    <!-- KİRALAMA MODU -->
+    <div id="modeKira" class="dn">
+      <div class="csingle">
+        <div class="ctitle"><i class="fas fa-key"></i> Kiralayan Hizmet Bedeli</div>
+        <div class="fg"><label>Tür</label>
+          <div class="seg">
+            <input type="radio" name="rtType" id="rtAmt" value="amount" checked onchange="el('rtLbl').textContent='Tutar';el('renterComm').removeAttribute('readonly');el('renterComm').value=''">
+            <label for="rtAmt">Tutar</label>
+            <input type="radio" name="rtType" id="rtPct" value="pct" onchange="el('rtLbl').textContent='Oran (%)';el('renterComm').removeAttribute('readonly');el('renterComm').value=''">
+            <label for="rtPct">%</label>
+            <input type="radio" name="rtType" id="rtEq" value="equal" onchange="el('rtLbl').textContent='Tutar';onSaleChange()">
+            <label for="rtEq">= Kira</label>
+          </div>
+        </div>
+        <div class="fg">
+          <label id="rtLbl">Tutar</label>
+          <div class="r2" style="gap:5px">
+            <select id="rCur" onchange="updateSymbols()" style="width:70px;flex:none;padding:7px 5px;">
+              <option value="TL">₺</option><option value="USD">$</option><option value="EUR">€</option>
+            </select>
+            <div class="cur-wrap" style="flex:1">
+              <span class="cur-sym" id="rSym">₺</span>
+              <input type="number" id="renterComm" placeholder="0" min="0" oninput="hint('renterComm','rcHint','rCur')"/>
+            </div>
+          </div>
+          <div class="hint" id="rcHint"></div>
+        </div>
+        <div class="kdv-btn" onclick="toggleKdv('renter')"><div class="kbox" id="kbRenter"></div><span class="klbl">%20 KDV ekle</span></div>
+
+        <!-- ► KİRALAMA: DIŞ DANIŞMAN TOGGLE -->
+        <div class="ext-side-toggle" id="extRenterToggle" onclick="toggleExtSide('renter')">
+          <div class="ext-toggle-box" id="extRenterBox"></div>
+          <span class="ext-toggle-lbl"><i class="fas fa-handshake" style="font-size:10px;margin-right:3px"></i>Bu tarafı başka danışman temsil ediyor</span>
+        </div>
+        <div class="ext-side-panel" id="extRenterPanel">
+          <div class="ext-side-panel-inner">
+            <div class="fg" style="margin-bottom:8px">
+              <label>Danışman / Ofis Adı</label>
+              <input type="text" id="extRenterName" placeholder="ABC Emlak, Mehmet Demir..."/>
+            </div>
+            <div class="r2" style="gap:8px">
+              <div class="fg" style="margin-bottom:0">
+                <label>Pay Türü</label>
+                <div class="seg">
+                  <input type="radio" name="extRenterType" id="extRenterTypePct" value="pct" checked>
+                  <label for="extRenterTypePct">%</label>
+                  <input type="radio" name="extRenterType" id="extRenterTypeAmt" value="amount">
+                  <label for="extRenterTypeAmt">Tutar</label>
+                </div>
+              </div>
+              <div class="fg" style="margin-bottom:0">
+                <label>Pay</label>
+                <input type="number" id="extRenterVal" placeholder="25" min="0" step="0.5" oninput="extSideHint('renter')"/>
+              </div>
+            </div>
+            <div class="hint" id="extRenterHint" style="margin-top:4px"></div>
+          </div>
+        </div>
+
+        <div class="info" style="margin-top:9px"><i class="fas fa-circle-info" style="flex-shrink:0;margin-top:1px"></i><span>Genellikle 1 aylık kira bedeli esas alınır.</span></div>
+      </div>
+    </div>
+
+    <!-- KAPORA -->
+    <div style="margin-top:13px;padding-top:13px;border-top:1px solid var(--border)">
+      <div class="kapora-toggle" onclick="toggleKapora()">
+        <div class="kap-box" id="kapBox"></div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text)">Kapora / Ekstra Gelir</div>
+          <div style="font-size:11px;color:var(--muted)">Komisyondan bağımsız gelir ekle</div>
+        </div>
+      </div>
+      <div class="kapora-panel" id="kapPanel">
+        <div class="fg"><label>Açıklama</label><input type="text" id="kapDesc" placeholder="Kapora yandı, danışmanlık ücreti..."/></div>
+        <div class="fg">
+          <label>Tutar</label>
+          <div class="r2" style="gap:5px">
+            <select id="kapCur" onchange="updateSymbols()" style="width:70px;flex:none;padding:7px 5px;">
+              <option value="TL">₺</option><option value="USD">$</option><option value="EUR">€</option>
+            </select>
+            <div class="cur-wrap" style="flex:1">
+              <span class="cur-sym" id="kapSym">₺</span>
+              <input type="number" id="kapAmt" placeholder="0" min="0" oninput="hint('kapAmt','kapHint','kapCur')"/>
+            </div>
+          </div>
+          <div class="hint" id="kapHint"></div>
+        </div>
+        <div class="kap-info">
+          <i class="fas fa-info-circle" style="flex-shrink:0;margin-top:1px"></i>
+          <span>Kapora, seçili komisyon senaryosuyla aynı oran ve şartlarda paylaşılır.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- KART 3: PAYLAŞIM SENARYOSU -->
+<div class="card">
+  <div class="chd"><div class="ci" style="background:rgba(188,140,255,.15);color:var(--purple)"><i class="fas fa-code-branch"></i></div><h3>Paylaşım Senaryosu</h3></div>
+  <div class="cbd">
+    <div class="fg"><label>Portföy Kaynağı</label>
+      <div class="sc-list">
+        <div class="sc-item"><input type="radio" name="sc" id="sc1" value="1" checked onchange="onSc()"><label for="sc1"><div class="rdot"></div><div class="stxt"><strong>Kendi Portföyüm</strong><span>%70 Danışman • %30 Ofis</span></div></label></div>
+        <div class="sc-item"><input type="radio" name="sc" id="sc2" value="2" onchange="onSc()"><label for="sc2"><div class="rdot"></div><div class="stxt"><strong>Ofisten Gelen</strong><span>%55 Danışman • %45 Ofis</span></div></label></div>
+        <div class="sc-item"><input type="radio" name="sc" id="sc4" value="4" onchange="onSc()"><label for="sc4"><div class="rdot"></div><div class="stxt"><strong>Özel Oran</strong><span>Kendiniz belirleyin</span></div></label></div>
+      </div>
+    </div>
+    <div class="cpanel" id="panelCustom">
+      <div class="fg" style="margin-bottom:8px">
+        <div class="seg" id="custMode">
+          <input type="radio" name="custModeT" id="custModeP" value="pct" checked onchange="onCustMode()">
+          <label for="custModeP">% Oran</label>
+          <input type="radio" name="custModeT" id="custModeA" value="amount" onchange="onCustMode()">
+          <label for="custModeA">Tutar</label>
+        </div>
+      </div>
+      <div id="custPctPanel">
+        <div class="r2">
+          <div class="fg" style="margin-bottom:0"><label>Danışman (%)</label><input type="number" id="custAdv" placeholder="70" min="0" max="100" step="0.5" oninput="syncOff('custAdv','custOff')"/></div>
+          <div class="fg" style="margin-bottom:0"><label>Ofis (%)</label><input type="number" id="custOff" placeholder="30" readonly/></div>
+        </div>
+      </div>
+      <div id="custAmtPanel" class="dn">
+        <div class="fg" style="margin-bottom:0"><label>Bana Kalan Tutar</label><input type="number" id="custMine" placeholder="50000" min="0" oninput="onCustAmt()"/></div>
+        <div class="hint" id="custAmtHint" style="margin-top:3px"></div>
+      </div>
+      <div class="info" style="margin-top:8px"><i class="fas fa-circle-info" style="flex-shrink:0;margin-top:1px"></i><span>%0 danışman / %100 ofis de seçilebilir.</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-calc" id="btnCalc" onclick="calculate()"><i class="fas fa-calculator" id="btnCalcIcon"></i> <span id="btnCalcLbl">Hesapla</span></button>
+      <button class="btn btn-rst" onclick="resetForm()"><i class="fas fa-rotate-left"></i></button>
+    </div>
+  </div>
+</div>
+</div><!-- /grid3 -->
+
+<!-- SONUÇ -->
+<div class="res-card">
+  <div class="chd" style="justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div class="ci" style="background:rgba(227,179,65,.15);color:var(--orange)"><i class="fas fa-chart-pie"></i></div>
+      <h3>Hesaplama Sonuçları</h3>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-pdf dn" id="btnPdfSingle" onclick="exportSinglePdf()" style="padding:6px 12px;font-size:12px"><i class="fas fa-file-pdf"></i> PDF Al</button>
+      <button class="btn btn-save dn" id="btnSave" onclick="saveToHistory()" style="padding:6px 12px;font-size:12px"><i class="fas fa-floppy-disk"></i> Kayıt Altına Al</button>
+    </div>
+  </div>
+  <div id="resEmpty" class="res-empty"><i class="fas fa-chart-bar"></i><p>Formu doldurup <strong>Hesapla</strong> butonuna tıklayın.</p></div>
+  <div id="resContent" class="dn">
+    <div class="res-top" id="resTop">
+      <div class="rcol" id="colBuyer">
+        <div class="ctit buy"><i class="fas fa-user-check"></i> Alıcı Hizmet Bedeli</div>
+        <div class="rrow rtotal"><span class="rlbl">Toplam Komisyon</span><div class="rright"><span class="rval" id="rBTotal"></span></div></div>
+        <div class="rrow rext dn" id="rBExtRow"><span class="rlbl" id="rBExtLbl">Dış Danışman</span><div class="rright"><span class="rpct" id="rBExtPct"></span><span class="rval" id="rBExt"></span></div></div>
+        <div class="rrow rmine"><span class="rlbl">Bana Kalan</span><div class="rright"><span class="rpct" id="rBMinePct"></span><span class="rval" id="rBMine"></span></div></div>
+        <div class="rrow roff"><span class="rlbl">Ofise Kalan</span><div class="rright"><span class="rpct" id="rBOffPct"></span><span class="rval" id="rBOff"></span></div></div>
+      </div>
+      <div class="rcol" id="colSeller">
+        <div class="ctit sel"><i class="fas fa-user-tie"></i> Satıcı Hizmet Bedeli</div>
+        <div class="rrow rtotal"><span class="rlbl">Toplam Komisyon</span><div class="rright"><span class="rval" id="rSTotal"></span></div></div>
+        <div class="rrow rext dn" id="rSExtRow"><span class="rlbl" id="rSExtLbl">Dış Danışman</span><div class="rright"><span class="rpct" id="rSExtPct"></span><span class="rval" id="rSExt"></span></div></div>
+        <div class="rrow rmine"><span class="rlbl">Bana Kalan</span><div class="rright"><span class="rpct" id="rSMinePct"></span><span class="rval" id="rSMine"></span></div></div>
+        <div class="rrow roff"><span class="rlbl">Ofise Kalan</span><div class="rright"><span class="rpct" id="rSOfficePct"></span><span class="rval" id="rSOff"></span></div></div>
+      </div>
+      <div class="rcol dn" id="colRenter">
+        <div class="ctit ren"><i class="fas fa-key"></i> Kiralayan Hizmet Bedeli</div>
+        <div class="rrow rtotal"><span class="rlbl">Toplam Komisyon</span><div class="rright"><span class="rval" id="rRTotal"></span></div></div>
+        <div class="rrow rext dn" id="rRExtRow"><span class="rlbl" id="rRExtLbl">Dış Danışman</span><div class="rright"><span class="rpct" id="rRExtPct"></span><span class="rval" id="rRExt"></span></div></div>
+        <div class="rrow rmine"><span class="rlbl">Bana Kalan</span><div class="rright"><span class="rpct" id="rRMinePct"></span><span class="rval" id="rRMine"></span></div></div>
+        <div class="rrow roff"><span class="rlbl">Ofise Kalan</span><div class="rright"><span class="rpct" id="rROffPct"></span><span class="rval" id="rROff"></span></div></div>
+      </div>
+    </div>
+    <div class="res-bot">
+      <div class="ctit gnd" style="margin-bottom:12px"><i class="fas fa-sigma"></i> Genel Toplam</div>
+      <div class="ggrid">
+        <div class="gi"><div class="gl">Toplam Komisyon</div><div class="gv" id="gTotal"></div><div class="gp" id="gTotalSub"></div></div>
+        <div class="gi gmine"><div class="gl">Bana Kalan Toplam Net</div><div class="gv" id="gMine"></div><div class="gp" id="gMinePct"></div></div>
+        <div class="gi goff"><div class="gl">Ofise Kalan Toplam</div><div class="gv" id="gOff"></div><div class="gp" id="gOffPct"></div></div>
+        <div class="gi dn" id="gExtBuyerBlock"><div class="gl" id="gExtBuyerLbl">Dış Dan. (Alıcı)</div><div class="gv" id="gExtBuyer" style="color:var(--orange)"></div><div class="gp" id="gExtBuyerSub"></div></div>
+        <div class="gi dn" id="gExtSellerBlock"><div class="gl" id="gExtSellerLbl">Dış Dan. (Satıcı)</div><div class="gv" id="gExtSeller" style="color:var(--orange)"></div><div class="gp" id="gExtSellerSub"></div></div>
+        <div class="gi dn" id="gExtRenterBlock"><div class="gl" id="gExtRenterLbl">Dış Danışman</div><div class="gv" id="gExtRenter" style="color:var(--orange)"></div><div class="gp" id="gExtRenterSub"></div></div>
+        <div class="gi gkap dn" id="gKapBlock"><div class="gl" id="gKapLbl">Kapora / Ekstra Gelir</div><div class="gv" id="gKap"></div><div class="gp" id="gKapSub"></div></div>
+      </div>
+    </div>
+    <div class="pstrip"><div id="propItems" style="display:flex;gap:12px;flex-wrap:wrap"></div></div>
+  </div>
+</div>
+
+<!-- TARİHÇE -->
+<div class="hist-card">
+  <div class="chd" style="justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div class="ci" style="background:rgba(47,129,247,.15);color:var(--blue)"><i class="fas fa-clock-rotate-left"></i></div>
+      <h3>İşlem Geçmişi</h3>
+    </div>
+    <button class="btn btn-pdf dn" id="btnHistPdf" onclick="openPdfModal()" style="font-size:12px;padding:6px 12px"><i class="fas fa-file-pdf"></i> PDF Rapor Al</button>
+  </div>
+  <div id="histEmpty" class="empty"><i class="fas fa-inbox"></i><p>Henüz kayıt yok.</p></div>
+  <div id="histContent" class="dn">
+    <div class="twrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Tarih</th><th>Müşteri</th><th>Mülk</th><th>İlçe</th>
+          <th>Tür</th><th>Komisyon</th><th>Ofise</th>
+          <th>Dış Dan.</th><th>Kapora</th><th>Bana Kalan</th><th></th>
+        </tr></thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- PDF RAPOR MODALI -->
+<div class="modal-overlay dn" id="pdfModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3><i class="fas fa-file-pdf" style="color:var(--red)"></i> PDF Rapor Oluştur</h3>
+      <button class="close-btn" onclick="closePdfModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <!-- SEKMELER -->
+    <div class="pdf-tabs">
+      <button class="pdf-tab active" onclick="switchPdfTab('mode',this)"><i class="fas fa-layer-group" style="margin-right:5px"></i>Rapor Modu</button>
+      <button class="pdf-tab" onclick="switchPdfTab('filter',this)"><i class="fas fa-filter" style="margin-right:5px"></i>Filtre & Seçim</button>
+      <button class="pdf-tab" onclick="switchPdfTab('sections',this)"><i class="fas fa-list-check" style="margin-right:5px"></i>Bölümler</button>
+      <button class="pdf-tab" onclick="switchPdfTab('agency',this)"><i class="fas fa-building" style="margin-right:5px"></i>Ajans Bilgileri</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- TAB 1: RAPOR MODU -->
+      <div class="pdf-tab-panel active" id="ptab-mode">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Raporun içerik ve detay seviyesini seçin:</div>
+        <div class="rmod-grid">
+          <div class="rmod-card">
+            <input type="radio" name="pdfMode" id="pm1" value="full" checked onchange="onPdfModeChange()">
+            <label class="rmod-label" for="pm1">
+              <span class="rmod-icon">📋</span>
+              <span class="rmod-title">Tam Detay</span>
+              <span class="rmod-desc">Her işlemin tüm kalemleri, döviz karşılıkları, dış danışman kesintileri</span>
+            </label>
+          </div>
+          <div class="rmod-card">
+            <input type="radio" name="pdfMode" id="pm2" value="summary" onchange="onPdfModeChange()">
+            <label class="rmod-label" for="pm2">
+              <span class="rmod-icon">📊</span>
+              <span class="rmod-title">Özet & İstatistik</span>
+              <span class="rmod-desc">Toplamlar, trend grafikleri, döviz bazlı dağılım, oran analizleri</span>
+            </label>
+          </div>
+          <div class="rmod-card">
+            <input type="radio" name="pdfMode" id="pm3" value="earnings" onchange="onPdfModeChange()">
+            <label class="rmod-label" for="pm3">
+              <span class="rmod-icon">💰</span>
+              <span class="rmod-title">Kazançlarım</span>
+              <span class="rmod-desc">Yalnızca bana kalan net tutarlar, yıllık performans, en iyi işlemler</span>
+            </label>
+          </div>
+          <div class="rmod-card">
+            <input type="radio" name="pdfMode" id="pm4" value="comparison" onchange="onPdfModeChange()">
+            <label class="rmod-label" for="pm4">
+              <span class="rmod-icon">📈</span>
+              <span class="rmod-title">Karşılaştırmalı</span>
+              <span class="rmod-desc">Aylık/yıllık trend, satış vs kiralama, büyüme oranı analizi</span>
+            </label>
+          </div>
+          <div class="rmod-card">
+            <input type="radio" name="pdfMode" id="pm5" value="client" onchange="onPdfModeChange()">
+            <label class="rmod-label" for="pm5">
+              <span class="rmod-icon">👤</span>
+              <span class="rmod-title">Müşteri Odaklı</span>
+              <span class="rmod-desc">Müşteri bilgileri ön planda, komisyon detayları gizli — müşteriyle paylaşıma uygun</span>
+            </label>
+          </div>
+          <div class="rmod-card">
+            <input type="radio" name="pdfMode" id="pm6" value="custom" onchange="onPdfModeChange()">
+            <label class="rmod-label" for="pm6">
+              <span class="rmod-icon">⚙️</span>
+              <span class="rmod-title">Özel Seçim</span>
+              <span class="rmod-desc">Bölümler sekmesinden istediğiniz bölümleri tek tek seçin</span>
+            </label>
+          </div>
+        </div>
+        <div class="preview-bar" id="modePreviewBar">
+          <i class="fas fa-eye"></i>
+          <span id="modePreviewTxt">Tam Detay: İşlem kartları + istatistik özeti + döviz dökümü + bölüm başlıkları</span>
+        </div>
+      </div>
+
+      <!-- TAB 2: FİLTRE & SEÇİM -->
+      <div class="pdf-tab-panel" id="ptab-filter">
+        <!-- Tarih filtresi -->
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px"><i class="fas fa-calendar" style="margin-right:5px"></i>Tarih Aralığı</div>
+        <div class="df-quick">
+          <span class="df-chip" onclick="setDatePreset('all',this)">Tümü</span>
+          <span class="df-chip" onclick="setDatePreset('thisYear',this)">Bu Yıl</span>
+          <span class="df-chip" onclick="setDatePreset('lastYear',this)">Geçen Yıl</span>
+          <span class="df-chip" onclick="setDatePreset('thisMonth',this)">Bu Ay</span>
+          <span class="df-chip" onclick="setDatePreset('last3',this)">Son 3 Ay</span>
+          <span class="df-chip" onclick="setDatePreset('last6',this)">Son 6 Ay</span>
+        </div>
+        <div class="date-filter-row">
+          <div class="fg"><label>Başlangıç</label><input type="date" id="pdfDateFrom" onchange="applyDateFilter()"></div>
+          <div class="fg"><label>Bitiş</label><input type="date" id="pdfDateTo" onchange="applyDateFilter()"></div>
+          <button class="btn btn-rst" onclick="clearDateFilter()" style="padding:7px 11px;font-size:12px;flex-shrink:0"><i class="fas fa-rotate-left"></i></button>
+        </div>
+        <!-- İşlem tipi filtresi -->
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px"><i class="fas fa-tag" style="margin-right:5px"></i>İşlem Tipi</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;text-transform:none;letter-spacing:0;color:var(--text)"><input type="checkbox" id="pfSatis" checked onchange="applyDateFilter()" style="width:14px;height:14px;accent-color:var(--blue)"> Satış</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;text-transform:none;letter-spacing:0;color:var(--text)"><input type="checkbox" id="pfKira" checked onchange="applyDateFilter()" style="width:14px;height:14px;accent-color:var(--orange)"> Kiralama</label>
+        </div>
+        <!-- İşlem listesi -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label class="rpt-sel-all" style="margin-bottom:0">
+            <input type="checkbox" id="chkSelAll" onchange="toggleSelAll(this.checked)">
+            <span>Tümünü Seç / Kaldır</span>
+          </label>
+          <span class="rpt-count-badge" id="selCountBadge">0 seçili</span>
+        </div>
+        <div class="rpt-list" id="rptList"></div>
+      </div>
+
+      <!-- TAB 3: BÖLÜMLER -->
+      <div class="pdf-tab-panel" id="ptab-sections">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Rapora dahil edilecek bölümleri seçin. <span id="customModeNote" style="color:var(--orange);font-weight:600"></span></div>
+        <div class="section-opts" id="sectionOpts">
+          <div class="sect-item checked" onclick="toggleSect(this,'secCover')"><input type="checkbox" id="secCover" checked><span class="sect-icon">🏠</span><span>Kapak Sayfası</span></div>
+          <div class="sect-item checked" onclick="toggleSect(this,'secStats')"><input type="checkbox" id="secStats" checked><span class="sect-icon">📊</span><span>İstatistik Özeti</span></div>
+          <div class="sect-item checked" onclick="toggleSect(this,'secTrend')"><input type="checkbox" id="secTrend" checked><span class="sect-icon">📈</span><span>Aylık Trend Tablosu</span></div>
+          <div class="sect-item checked" onclick="toggleSect(this,'secCurrency')"><input type="checkbox" id="secCurrency" checked><span class="sect-icon">💱</span><span>Döviz Bazlı Döküm</span></div>
+          <div class="sect-item checked" onclick="toggleSect(this,'secTop')"><input type="checkbox" id="secTop" checked><span class="sect-icon">🏆</span><span>Top 5 İşlem</span></div>
+          <div class="sect-item checked" onclick="toggleSect(this,'secExt')"><input type="checkbox" id="secExt" checked><span class="sect-icon">🤝</span><span>Dış Danışman Analizi</span></div>
+          <div class="sect-item checked" onclick="toggleSect(this,'secTxList')"><input type="checkbox" id="secTxList" checked><span class="sect-icon">📋</span><span>İşlem Kartları</span></div>
+          <div class="sect-item checked" onclick="toggleSect(this,'secNotes')"><input type="checkbox" id="secNotes" checked><span class="sect-icon">📝</span><span>Danışman Notları</span></div>
+          <div class="sect-item checked" onclick="toggleSect(this,'secPerf')"><input type="checkbox" id="secPerf" checked><span class="sect-icon">🎯</span><span>Performans Skoru</span></div>
+          <div class="sect-item checked" onclick="toggleSect(this,'secDate')"><input type="checkbox" id="secDate" checked><span class="sect-icon">🕐</span><span>Rapor Tarihi/Saati</span></div>
+        </div>
+      </div>
+
+      <!-- TAB 4: AJANS BİLGİLERİ -->
+      <div class="pdf-tab-panel" id="ptab-agency">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Bu bilgiler PDF'in kapak sayfasında ve başlıkta görünür.</div>
+        <div class="agency-grid">
+          <div class="agency-field fg"><label>Ofis / Şirket Adı</label><input type="text" id="agencyName" placeholder="ABC Gayrimenkul"/></div>
+          <div class="agency-field fg"><label>Danışman Adı</label><input type="text" id="agencyAdv" placeholder="Ahmet Yılmaz"/></div>
+          <div class="agency-field fg"><label>Telefon</label><input type="text" id="agencyPhone" placeholder="0532 000 00 00"/></div>
+          <div class="agency-field fg"><label>E-posta</label><input type="text" id="agencyEmail" placeholder="info@abcemlak.com"/></div>
+          <div class="agency-field fg"><label>Adres / Şube</label><input type="text" id="agencyAddr" placeholder="Kadıköy, İstanbul"/></div>
+          <div class="agency-field fg"><label>Lisans / Belge No</label><input type="text" id="agencyLic" placeholder="YK-2024-XXXXX"/></div>
+        </div>
+        <div class="info" style="margin-top:4px"><i class="fas fa-circle-info" style="flex-shrink:0"></i><span>Bu bilgiler tarayıcınızda saklanır, bir sonraki raporunuzda otomatik doldurulur.</span></div>
+      </div>
+
+    </div><!-- /modal-body -->
+
+    <div class="modal-foot">
+      <div style="font-size:11px;color:var(--muted)" id="pdfFootNote">
+        <i class="fas fa-circle-info" style="margin-right:4px"></i> Tüm tutarlar bugünkü kur üzerinden TL karşılığıyla gösterilir.
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-rst" onclick="closePdfModal()">İptal</button>
+        <button class="btn btn-pdf" style="flex:none" onclick="generatePdfReport()"><i class="fas fa-file-pdf"></i> PDF Oluştur</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB8TDy_SZF4HEnbuDhQx5VlfCXdobbMebs",
+  authDomain: "emlak-commission.firebaseapp.com",
+  databaseURL: "https://emlak-commission-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "emlak-commission",
+  storageBucket: "emlak-commission.firebasestorage.app",
+  messagingSenderId: "382094788774",
+  appId: "1:382094788774:web:ced8532c76d50ddd89cc67"
+};
+
+let history = [];
+let currentCalc = null;
+let editingId = null;
+let kapOn = false;
+let detailMode = false;
+let fbConnected = false;
+let historyRef = null;
+let fbUid = null;
+let rates = { USD: 33.00, EUR: 36.00, fetchedAt: null };
+const kdv = { buyer: false, seller: false, renter: false };
+
+// Taraf bazlı dış danışman durumu
+const extSideState = { buyer: false, seller: false, renter: false };
+
+const el   = id => document.getElementById(id);
+const sym  = cur => cur === 'USD' ? '$' : cur === 'EUR' ? '€' : '₺';
+const show = (id, s = true) => el(id).classList.toggle('dn', !s);
+const txt  = (id, v) => { const e = el(id); if (e) e.textContent = v; };
+const setH = (id, html) => { const e = el(id); if (e) e.innerHTML = html; };
+const propLbl = { daire: 'Daire', arsa: 'Arsa', villa: 'Villa', dukkan: 'Dükkan', ofis: 'Ofis', diger: 'Diğer' };
+
+const fmt = (n, cur = 'TL') =>
+  sym(cur) + '\u202f' + Number(n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtTL = n =>
+  '₺\u202f' + Number(n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtKTL = n => {
+  n = Number(n || 0);
+  if (n >= 1e6) return '₺' + (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return '₺' + (n / 1e3).toFixed(0) + 'K';
+  return fmtTL(n);
+};
+const pct = (p, t) => t > 0 ? '%' + (p / t * 100).toFixed(1) : '%0';
+
+/**
+ * fmtWithOrig: TL büyük, altında küçük orijinal döviz
+ * liveAmt parametresi sadece PDF detaylı mod için kullanılır
+ */
+function fmtWithOrig(recordedTL, origAmt, origCur, asHTML = true, liveAmt = null) {
+  const base = fmtTL(recordedTL);
+  if (!origCur || origCur === 'TL' || !origAmt || origAmt === 0) return base;
+  const origFmt = fmt(origAmt, origCur);
+
+  if (!asHTML) {
+    // PDF detaylı mod: kur farkı göster
+    if (liveAmt !== null && Math.abs(liveAmt - recordedTL) > 1) {
+      const diff = liveAmt - recordedTL;
+      const sign = diff > 0 ? '+' : '';
+      return `${base} (${origFmt}) | Bugün: ${fmtTL(liveAmt)} (${sign}${fmtTL(diff)})`;
+    }
+    return `${base} (${origFmt})`;
+  }
+
+  // Ekran: TL büyük, altında küçük parantezde orijinal
+  return `<span style="display:block;line-height:1.4">
+    <span style="display:block">${base}</span>
+    <span style="display:block;font-size:10px;color:var(--muted);font-weight:400">(${origFmt})</span>
+  </span>`;
+}
+
+/** toTL: kayıt anı kuru öncelikli, yoksa canlı kur */
+function toTL(amount, cur, recRates) {
+  const rU = recRates ? (recRates.rateUSD || rates.USD) : rates.USD;
+  const rE = recRates ? (recRates.rateEUR || rates.EUR) : rates.EUR;
+  if (!cur || cur === 'TL') return amount;
+  if (cur === 'USD') return amount * rU;
+  if (cur === 'EUR') return amount * rE;
+  return amount;
+}
+
+/** toTLLive: her zaman güncel kurla hesaplar (bugünkü değer) */
+function toTLLive(amount, cur) {
+  if (!cur || cur === 'TL') return amount;
+  if (cur === 'USD') return amount * rates.USD;
+  if (cur === 'EUR') return amount * rates.EUR;
+  return amount;
+}
+
+/**
+ * fmtCurrency: en yaygın kullanım — döviz tutarını 3 katmanlı render eder
+ * origAmt: orijinal döviz miktarı
+ * cur: para birimi
+ * recRates: kayıt anı kurları ({ rateUSD, rateEUR })
+ * asHTML: true → ekran, false → metin/PDF
+ */
+function fmtCurrency(origAmt, cur, recRates, asHTML = true) {
+  if (!cur || cur === 'TL' || !origAmt) return fmtTL(origAmt || 0);
+  const recordedTL = toTL(origAmt, cur, recRates);
+  const liveAmt    = toTLLive(origAmt, cur);
+  return fmtWithOrig(recordedTL, origAmt, cur, asHTML, liveAmt);
+}
+
+function hint(inputId, hintId, curIdOrVal) {
+  const v = parseFloat(el(inputId).value);
+  const curEl = el(curIdOrVal);
+  const curVal = curEl ? curEl.value : curIdOrVal;
+  el(hintId).textContent = v > 0
+    ? '= ' + Number(v).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym(curVal)
+    : '';
+}
+
+/* ── YENİ: Taraf bazlı dış danışman toggle ── */
+function toggleExtSide(side) {
+  extSideState[side] = !extSideState[side];
+  const box = el('ext' + cap(side) + 'Box');
+  const panel = el('ext' + cap(side) + 'Panel');
+  const toggle = el('ext' + cap(side) + 'Toggle');
+  box.classList.toggle('on', extSideState[side]);
+  box.innerHTML = extSideState[side] ? '<i class="fas fa-check" style="color:#fff;font-size:9px"></i>' : '';
+  panel.classList.toggle('open', extSideState[side]);
+  toggle.classList.toggle('active', extSideState[side]);
+}
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function extSideHint(side) {
+  var _ec = document.querySelector('input[name="ext' + cap(side) + 'Type"]:checked');
+  const isAmt = (_ec ? _ec.value : '') === 'amount';
+  const v = parseFloat(el('ext' + cap(side) + 'Val').value) || 0;
+  const hintEl = el('ext' + cap(side) + 'Hint');
+  if (!hintEl) return;
+  if (!v) { hintEl.textContent = ''; return; }
+  const cur = side === 'buyer' ? el('bCur').value : side === 'seller' ? el('sCur').value : el('rCur').value;
+  hintEl.textContent = isAmt
+    ? '= ' + Number(v).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym(cur)
+    : '%' + v + ' kesilecek';
+}
+
+/* ── Dış danışman payını hesapla ── */
+function calcExtPay(side, totalTL) {
+  if (!extSideState[side]) return 0;
+  const typeName = 'ext' + cap(side) + 'Type';
+  const valId = 'ext' + cap(side) + 'Val';
+  var _tc = document.querySelector('input[name="' + typeName + '"]:checked');
+  const typeVal = (_tc ? _tc.value : '') || 'pct';
+  var _ve = el(valId); const v = parseFloat(_ve ? _ve.value : 0) || 0;
+  if (typeVal === 'pct') return totalTL * v / 100;
+  const cur = side === 'buyer' ? el('bCur').value : side === 'seller' ? el('sCur').value : el('rCur').value;
+  return Math.min(toTL(v, cur), totalTL);
+}
+
+function getExtName(side) {
+  if (!extSideState[side]) return '';
+  var _ne = el('ext' + cap(side) + 'Name'); return (_ne ? _ne.value.trim() : '') || 'Dış Danışman';
+}
+
+function syncOff(advId, offId) {
+  const v = parseFloat(el(advId).value);
+  el(offId).value = (!isNaN(v) && v >= 0) ? Math.max(0, 100 - Math.min(100, v)).toFixed(1).replace(/\.0$/, '') : '';
+}
+
+function updateSymbols() {
+  [['saleCur','saSym'],['bCur','bSym'],['sCur','sSym'],['rCur','rSym'],['kapCur','kapSym']]
+    .forEach(([s, sym2]) => { const e = el(sym2); if (e) e.textContent = sym(el(s).value); });
+}
+
+function setFbStatus(state, msg) {
+  const dot = el('fbDot'), t = el('fbTxt');
+  dot.className = 'fb-dot ' + state;
+  t.textContent = msg;
+  t.style.color = state === 'online' ? 'var(--green)' : state === 'offline' ? 'var(--red)' : 'var(--muted)';
+}
+
+function updateLiveExchangeRates() {
+  fetch('https://api.exchangerate-api.com/v4/latest/USD')
+    .then(r => r.json())
+    .then(d => { rates.USD = d.rates.TRY; return fetch('https://api.exchangerate-api.com/v4/latest/EUR'); })
+    .then(r => r.json())
+    .then(d2 => { rates.EUR = d2.rates.TRY; rates.fetchedAt = new Date(); renderKur(); })
+    .catch(() => { el('kurUSD').textContent = '$ kur alınamadı'; });
+}
+
+function renderKur() {
+  el('kurUSD').innerHTML = `<i class="fas fa-dollar-sign" style="font-size:9px"></i> 1 USD = <strong style="color:var(--lblue)">₺${rates.USD.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>`;
+  el('kurEUR').innerHTML = `<i class="fas fa-euro-sign" style="font-size:9px"></i> 1 EUR = <strong style="color:var(--purple)">₺${rates.EUR.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>`;
+  if (rates.fetchedAt) {
+    const t = rates.fetchedAt;
+    el('kurTime').textContent = t.getHours().toString().padStart(2,'0') + ':' + t.getMinutes().toString().padStart(2,'0') + ' güncel';
+  }
+}
+
+function onCustMode() {
+  const isAmt = document.querySelector('input[name="custModeT"]:checked').value === 'amount';
+  el('custPctPanel').classList.toggle('dn', isAmt);
+  el('custAmtPanel').classList.toggle('dn', !isAmt);
+  if (!isAmt) el('custAmtHint').textContent = '';
+}
+function onCustAmt() {
+  const v = parseFloat(el('custMine').value) || 0;
+  el('custAmtHint').textContent = v > 0 ? 'Kalan otomatik ofise gidecek' : '';
+}
+
+function toggleKdv(side) {
+  kdv[side] = !kdv[side];
+  const idMap = { buyer: 'kbBuyer', seller: 'kbSeller', renter: 'kbRenter' };
+  const b = el(idMap[side]);
+  b.classList.toggle('on', kdv[side]);
+  b.innerHTML = kdv[side] ? '<i class="fas fa-check" style="color:#fff;font-size:9px"></i>' : '';
+}
+
+function resetKdv() {
+  ['buyer','seller','renter'].forEach(s => {
+    kdv[s] = false;
+    const idMap = { buyer:'kbBuyer', seller:'kbSeller', renter:'kbRenter' };
+    const b = el(idMap[s]);
+    if (b) { b.classList.remove('on'); b.innerHTML = ''; }
+  });
+}
+
+function resetExtSide() {
+  ['buyer','seller','renter'].forEach(side => {
+    if (extSideState[side]) toggleExtSide(side); // kapat
+    // alanları temizle
+    const n = el('ext' + cap(side) + 'Name'); if (n) n.value = '';
+    const v = el('ext' + cap(side) + 'Val');  if (v) v.value = '';
+    const h = el('ext' + cap(side) + 'Hint'); if (h) h.textContent = '';
+    const pctR = el('ext' + cap(side) + 'TypePct'); if (pctR) pctR.checked = true;
+  });
+}
+
+function toggleKapora() {
+  kapOn = !kapOn;
+  const b = el('kapBox');
+  b.classList.toggle('on', kapOn);
+  b.innerHTML = kapOn ? '<i class="fas fa-check" style="color:#fff;font-size:9px"></i>' : '';
+  el('kapPanel').classList.toggle('on', kapOn);
+}
+
+function resetKapora() {
+  kapOn = false;
+  const b = el('kapBox'); b.classList.remove('on'); b.innerHTML = '';
+  el('kapPanel').classList.remove('on');
+  ['kapAmt','kapDesc'].forEach(id => { const e = el(id); if (e) e.value = ''; });
+  el('kapHint').textContent = '';
+  el('kapCur').value = 'TL'; el('kapSym').textContent = '₺';
+}
+
+function onTx() {
+  const kira = el('txType').value === 'kiralama';
+  show('modeSatis', !kira);
+  show('modeKira', kira);
+  if (kira) onSaleChange();
+}
+
+function onSaleChange() {
+  if (el('txType').value !== 'kiralama') return;
+  const rtType = document.querySelector('input[name="rtType"]:checked').value;
+  if (rtType === 'equal') {
+    const v = parseFloat(el('saleAmt').value) || 0;
+    const rc = el('renterComm');
+    rc.value = v || '';
+    rc.setAttribute('readonly', '');
+    hint('renterComm','rcHint','rCur');
+  }
+}
+
+function onSc() {
+  el('panelCustom').classList.toggle('on', document.querySelector('input[name="sc"]:checked').value === '4');
+}
+
+function split(net, sc) {
+  if (sc === '4') {
+    var _cmc = document.querySelector('input[name="custModeT"]:checked');
+    const isAmt = (_cmc ? _cmc.value : '') === 'amount';
+    if (isAmt) { const mine = Math.min(parseFloat(el('custMine').value) || 0, net); return { mine, off: net - mine }; }
+    const r = Math.max(0, Math.min(100, parseFloat(el('custAdv').value) || 0)) / 100;
+    return { mine: net * r, off: net * (1 - r) };
+  }
+  const r = sc === '2' ? 0.55 : 0.70;
+  return { mine: net * r, off: net * (1 - r) };
+}
+
+/* ═══════════════ CALCULATE ═══════════════ */
+function calculate() {
+  const isKira = el('txType').value === 'kiralama';
+  const saleAmt = parseFloat(el('saleAmt').value) || 0;
+  const sc = document.querySelector('input[name="sc"]:checked').value;
+  const saleCur = el('saleCur').value;
+
+  const kapAmtOrig = kapOn ? (parseFloat(el('kapAmt').value) || 0) : 0;
+  const kapCurV = el('kapCur').value;
+  const kapAmtTL = toTL(kapAmtOrig, kapCurV);
+  const kapDesc = el('kapDesc').value.trim();
+
+  const bVal = parseFloat(el('buyerComm').value) || 0;
+  const sVal = parseFloat(el('sellerComm').value) || 0;
+  const rVal = parseFloat(el('renterComm').value) || 0;
+  const hasComm = isKira ? (rVal > 0) : (bVal > 0 || sVal > 0);
+
+  if (!hasComm && kapAmtOrig <= 0) {
+    alert('En az bir hizmet bedeli veya kapora/ekstra gelir girin.');
+    return;
+  }
+
+  let bTotal=0, sTotal=0, rTotal=0;
+  let bExt=0, sExt=0, rExt=0;
+  let bSpl={mine:0,off:0}, sSpl={mine:0,off:0}, rSpl={mine:0,off:0};
+  let bCur='TL', sCur='TL', rCur='TL';
+  let bOrigAmt=0, sOrigAmt=0, rOrigAmt=0;
+  let kapMine=0, kapOff=0;
+
+  const withKdv = (base, side) => kdv[side] ? base * 1.20 : base;
+  const commOf = (inputId, radioName) => {
+    const t = document.querySelector('input[name="'+radioName+'"]:checked').value;
+    const v = parseFloat(el(inputId).value) || 0;
+    return t === 'pct' ? saleAmt * v / 100 : v;
+  };
+
+  if (isKira) {
+    rCur = el('rCur').value;
+    const rtType = document.querySelector('input[name="rtType"]:checked').value;
+    let rBase;
+    if (rtType === 'equal') rBase = saleAmt;
+    else if (rtType === 'pct') rBase = saleAmt * rVal / 100;
+    else rBase = rVal;
+    rOrigAmt = rBase;
+    rTotal = withKdv(toTL(rBase, rCur), 'renter');
+
+    rExt = calcExtPay('renter', rTotal);
+    rSpl = split(rTotal - rExt, sc);
+    if (kapAmtTL > 0) { const ks = split(kapAmtTL, sc); kapMine = ks.mine; kapOff = ks.off; }
+
+  } else {
+    bCur = el('bCur').value; sCur = el('sCur').value;
+    bOrigAmt = commOf('buyerComm','btType');
+    sOrigAmt = commOf('sellerComm','stType');
+    bTotal = withKdv(toTL(bOrigAmt, bCur), 'buyer');
+    sTotal = withKdv(toTL(sOrigAmt, sCur), 'seller');
+
+    bExt = calcExtPay('buyer', bTotal);
+    sExt = calcExtPay('seller', sTotal);
+
+    bSpl = split(bTotal - bExt, sc);
+    sSpl = split(sTotal - sExt, sc);
+    if (kapAmtTL > 0) { const ks = split(kapAmtTL, sc); kapMine = ks.mine; kapOff = ks.off; }
+  }
+
+  const grandTotal = isKira ? rTotal : (bTotal + sTotal);
+  const totalMine  = isKira ? rSpl.mine : (bSpl.mine + sSpl.mine);
+  const totalOff   = isKira ? rSpl.off  : (bSpl.off  + sSpl.off);
+  const totalExtB  = bExt;
+  const totalExtS  = sExt;
+  const totalExtR  = rExt;
+  const saleTL     = toTL(saleAmt, saleCur);
+
+  currentCalc = {
+    id: editingId || Date.now(),
+    cName: el('cName').value || 'Adsız',
+    cPhone: el('cPhone').value || '',
+    txDate: el('txDate').value || '',
+    propType: el('propType').value,
+    txType: el('txType').value,
+    locD: el('locD').value,
+    locC: el('locC').value,
+    descTxt: el('descTxt').value || '',
+    saleCur, saleAmt, saleTL, isKira,
+    bCur, sCur, rCur,
+    bOrigAmt, sOrigAmt, rOrigAmt,
+    bTotal, sTotal, rTotal,
+    bMine: bSpl.mine, bOff: bSpl.off, bExt: totalExtB,
+    sMine: sSpl.mine, sOff: sSpl.off, sExt: totalExtS,
+    rMine: rSpl.mine, rOff: rSpl.off, rExt: totalExtR,
+    // Dış danışman bilgileri
+    extBuyerOn: extSideState.buyer, extBuyerName: getExtName('buyer'), extBuyerAmt: totalExtB,
+    extSellerOn: extSideState.seller, extSellerName: getExtName('seller'), extSellerAmt: totalExtS,
+    extRenterOn: extSideState.renter, extRenterName: getExtName('renter'), extRenterAmt: totalExtR,
+    grandTotal, totalMine, totalOff,
+    totalExt: totalExtB + totalExtS + totalExtR,
+    sc,
+    kapOn, kapAmtOrig, kapAmtTL, kapCur: kapCurV, kapDesc,
+    kapMine, kapOff,
+    kdvBuyer: kdv.buyer, kdvSeller: kdv.seller, kdvRenter: kdv.renter,
+    rateUSD: rates.USD, rateEUR: rates.EUR,
+    brut: grandTotal,
+    net: totalMine + kapMine
+  };
+
+  if (editingId) {
+    const idx = history.findIndex(h => h.id === editingId);
+    if (idx >= 0) history[idx] = { ...currentCalc };
+    persistHistory();
+    renderResults(currentCalc);
+    loadHistory(); updateStats();
+    editingId = null;
+    show('editBanner', false);
+    el('btnCalcIcon').className = 'fas fa-calculator';
+    el('btnCalcLbl').textContent = 'Hesapla';
+    show('btnSave', false);
+    setTimeout(() => el('resContent').scrollIntoView({ behavior:'smooth', block:'start' }), 100);
+  } else {
+    renderResults(currentCalc);
+  }
+}
+
+/* ═══════════════ RENDER RESULTS ═══════════════ */
+function renderResults(r) {
+  show('resEmpty', false); show('resContent', true);
+  if (!editingId) { show('btnSave', true); show('btnPdfSingle', true); }
+
+  function fillCol(ids, total, ext, mine, off, eName, origAmt, origCur) {
+    const hasFx = origCur && origCur !== 'TL' && origAmt > 0 && total > 0;
+
+    // Toplam komisyon
+    setH(ids.total, hasFx ? fmtWithOrig(total, origAmt, origCur) : fmtTL(total));
+
+    // Dış danışman
+    if (ext > 0) {
+      show(ids.extRow, true);
+      const extOrig = hasFx ? (ext / total * origAmt) : 0;
+      setH(ids.ext, hasFx ? fmtWithOrig(ext, extOrig, origCur) : fmtTL(ext));
+      txt(ids.extPct, pct(ext, total));
+      txt(ids.extLbl, eName || 'Dış Danışman');
+    } else {
+      show(ids.extRow, false);
+    }
+
+    // Bana kalan
+    const mineOrig = hasFx ? (mine / total * origAmt) : 0;
+    setH(ids.mine, hasFx ? fmtWithOrig(mine, mineOrig, origCur) : fmtTL(mine));
+    txt(ids.minePct, pct(mine, total));
+
+    // Ofise kalan
+    const offOrig = hasFx ? (off / total * origAmt) : 0;
+    setH(ids.off, hasFx ? fmtWithOrig(off, offOrig, origCur) : fmtTL(off));
+    txt(ids.offPct, pct(off, total));
+  }
+
+  const top = el('resTop');
+  if (r.isKira) {
+    top.classList.add('one');
+    show('colBuyer', false); show('colSeller', false); show('colRenter', true);
+    fillCol(
+      { total:'rRTotal', extRow:'rRExtRow', ext:'rRExt', extPct:'rRExtPct', extLbl:'rRExtLbl', mine:'rRMine', minePct:'rRMinePct', off:'rROff', offPct:'rROffPct' },
+      r.rTotal, r.rExt, r.rMine, r.rOff, r.extRenterName, r.rOrigAmt, r.rCur
+    );
+    txt('gTotalSub', 'Kiralayan Komisyonu');
+  } else {
+    top.classList.remove('one');
+    show('colBuyer', r.bTotal > 0); show('colSeller', r.sTotal > 0); show('colRenter', false);
+    if (r.bTotal > 0) fillCol(
+      { total:'rBTotal', extRow:'rBExtRow', ext:'rBExt', extPct:'rBExtPct', extLbl:'rBExtLbl', mine:'rBMine', minePct:'rBMinePct', off:'rBOff', offPct:'rBOffPct' },
+      r.bTotal, r.bExt, r.bMine, r.bOff, r.extBuyerName, r.bOrigAmt, r.bCur
+    );
+    if (r.sTotal > 0) fillCol(
+      { total:'rSTotal', extRow:'rSExtRow', ext:'rSExt', extPct:'rSExtPct', extLbl:'rSExtLbl', mine:'rSMine', minePct:'rSMinePct', off:'rSOff', offPct:'rSOfficePct' },
+      r.sTotal, r.sExt, r.sMine, r.sOff, r.extSellerName, r.sOrigAmt, r.sCur
+    );
+    txt('gTotalSub', 'Alıcı + Satıcı');
+  }
+
+  // ── Genel toplam — her taraf kendi dövizini taşır ──
+  const totalMineVal = r.totalMine + (r.kapMine || 0);
+  const totalOffVal  = r.totalOff  + (r.kapOff  || 0);
+  const grandTotalV  = r.grandTotal;
+
+  // Genel toplam için döviz gösterimi: her tarafın katkısını ayrı hesapla
+  function buildGrandFx(field) {
+    // field: 'mine' | 'off' | 'total' | 'ext'
+    let lines = [];
+    if (!r.isKira) {
+      // Alıcı tarafı
+      if (r.bCur && r.bCur !== 'TL' && r.bOrigAmt > 0 && r.bTotal > 0) {
+        const ratio = field === 'total' ? 1
+          : field === 'mine' ? (r.bMine / r.bTotal)
+          : field === 'off'  ? (r.bOff  / r.bTotal)
+          : field === 'ext'  ? (r.bExt  / r.bTotal) : 0;
+        const orig = r.bOrigAmt * ratio;
+        if (orig > 0.01) lines.push(fmt(orig, r.bCur));
+      }
+      // Satıcı tarafı
+      if (r.sCur && r.sCur !== 'TL' && r.sOrigAmt > 0 && r.sTotal > 0) {
+        const ratio = field === 'total' ? 1
+          : field === 'mine' ? (r.sMine / r.sTotal)
+          : field === 'off'  ? (r.sOff  / r.sTotal)
+          : field === 'ext'  ? (r.sExt  / r.sTotal) : 0;
+        const orig = r.sOrigAmt * ratio;
+        if (orig > 0.01) lines.push(fmt(orig, r.sCur));
+      }
+    } else {
+      if (r.rCur && r.rCur !== 'TL' && r.rOrigAmt > 0 && r.rTotal > 0) {
+        const ratio = field === 'total' ? 1
+          : field === 'mine' ? (r.rMine / r.rTotal)
+          : field === 'off'  ? (r.rOff  / r.rTotal)
+          : field === 'ext'  ? (r.rExt  / r.rTotal) : 0;
+        const orig = r.rOrigAmt * ratio;
+        if (orig > 0.01) lines.push(fmt(orig, r.rCur));
+      }
+    }
+    return lines;
+  }
+
+  function fmtWithLines(tlVal, fxLines) {
+    if (!fxLines.length) return fmtTL(tlVal);
+    return `<span style="display:block;line-height:1.4">
+      <span style="display:block">${fmtTL(tlVal)}</span>
+      <span style="display:block;font-size:10px;color:var(--muted);font-weight:400">(${fxLines.join(' + ')})</span>
+    </span>`;
+  }
+
+  setH('gTotal', fmtWithLines(grandTotalV,  buildGrandFx('total')));
+  setH('gMine',  fmtWithLines(totalMineVal, buildGrandFx('mine')));
+  setH('gOff',   fmtWithLines(totalOffVal,  buildGrandFx('off')));
+  txt('gMinePct', pct(r.totalMine, r.grandTotal) + ' toplam komisyondan');
+  txt('gOffPct',  pct(r.totalOff,  r.grandTotal));
+
+  // Alıcı dış danışman bloğu
+  if ((r.extBuyerAmt || 0) > 0) {
+    show('gExtBuyerBlock', true);
+    const extBFx = (r.bCur && r.bCur !== 'TL' && r.bOrigAmt > 0 && r.bTotal > 0)
+      ? [fmt(r.bOrigAmt * (r.bExt / r.bTotal), r.bCur)] : [];
+    setH('gExtBuyer', fmtWithLines(r.extBuyerAmt, extBFx));
+    txt('gExtBuyerLbl', (r.extBuyerName || 'Dış Dan.') + ' (Alıcı)');
+    txt('gExtBuyerSub', 'Alıcı tarafı temsilcisi');
+  } else show('gExtBuyerBlock', false);
+
+  // Satıcı dış danışman bloğu
+  if ((r.extSellerAmt || 0) > 0) {
+    show('gExtSellerBlock', true);
+    const extSFx = (r.sCur && r.sCur !== 'TL' && r.sOrigAmt > 0 && r.sTotal > 0)
+      ? [fmt(r.sOrigAmt * (r.sExt / r.sTotal), r.sCur)] : [];
+    setH('gExtSeller', fmtWithLines(r.extSellerAmt, extSFx));
+    txt('gExtSellerLbl', (r.extSellerName || 'Dış Dan.') + ' (Satıcı)');
+    txt('gExtSellerSub', 'Satıcı tarafı temsilcisi');
+  } else show('gExtSellerBlock', false);
+
+  // Kiralama dış danışman
+  if ((r.extRenterAmt || 0) > 0) {
+    show('gExtRenterBlock', true);
+    const extRFx = (r.rCur && r.rCur !== 'TL' && r.rOrigAmt > 0 && r.rTotal > 0)
+      ? [fmt(r.rOrigAmt * (r.rExt / r.rTotal), r.rCur)] : [];
+    setH('gExtRenter', fmtWithLines(r.extRenterAmt, extRFx));
+    txt('gExtRenterLbl', r.extRenterName || 'Dış Danışman');
+    txt('gExtRenterSub', 'Kiralayan temsilcisi');
+  } else show('gExtRenterBlock', false);
+
+  const kapTL = r.kapAmtTL || 0;
+  if (kapTL > 0) {
+    show('gKapBlock', true);
+    setH('gKap', fmtWithOrig(kapTL, r.kapAmtOrig || 0, r.kapCur || 'TL'));
+    txt('gKapLbl', r.kapDesc || 'Kapora / Ekstra Gelir');
+    el('gKapSub').innerHTML = 'Bana: ' + fmtTL(r.kapMine || 0)
+      + (r.kapOff > 0 ? ' • Ofise: ' + fmtTL(r.kapOff) : '');
+  } else show('gKapBlock', false);
+
+  const loc = [r.locD, r.locC].filter(Boolean).join(', ');
+  el('propItems').innerHTML = [
+    r.cName   && `<div class="pi"><i class="fas fa-user"></i><span>${r.cName}</span></div>`,
+    r.cPhone  && `<div class="pi"><i class="fas fa-phone"></i><span>${r.cPhone}</span></div>`,
+    r.txDate  && `<div class="pi"><i class="fas fa-calendar"></i><span>${fmtDate(r.txDate)}</span></div>`,
+    `<div class="pi"><i class="fas fa-building"></i><span>${propLbl[r.propType] || '—'}</span></div>`,
+    loc       && `<div class="pi"><i class="fas fa-location-dot"></i><span>${loc}</span></div>`,
+    `<div class="pi"><i class="fas fa-tag"></i><span>${r.txType === 'satis' ? 'Satış' : 'Kiralama'}</span></div>`,
+    r.saleAmt > 0 && `<div class="pi"><i class="fas fa-lira-sign"></i><span>${fmt(r.saleAmt, r.saleCur)}</span></div>`,
+    r.descTxt && `<div class="pi"><i class="fas fa-note-sticky"></i><span title="${r.descTxt}">${r.descTxt.substring(0,40)}${r.descTxt.length>40?'...':''}</span></div>`,
+  ].filter(Boolean).join('');
+}
+
+/* ═══════════════ RESET ═══════════════ */
+function resetForm() {
+  ['cName','cPhone','saleAmt','buyerComm','sellerComm','renterComm','locD','locC','descTxt','custAdv','custOff','custMine'].forEach(id => { const e = el(id); if (e) e.value = ''; });
+  ['saHint','bcHint','scHint','rcHint','custAmtHint'].forEach(id => { const e = el(id); if (e) e.textContent = ''; });
+
+  el('txType').value = 'satis'; el('propType').value = 'daire';
+  ['saleCur','bCur','sCur','rCur'].forEach(id => el(id).value = 'TL');
+  ['btAmt','stAmt','rtAmt','sc1','custModeP'].forEach(id => { const e = el(id); if (e) e.checked = true; });
+
+  el('btLbl').textContent = 'Tutar'; el('stLbl').textContent = 'Tutar'; el('rtLbl').textContent = 'Tutar';
+  el('renterComm').removeAttribute('readonly');
+  el('panelCustom').classList.remove('on');
+  el('custPctPanel').classList.remove('dn'); el('custAmtPanel').classList.add('dn');
+
+  show('resEmpty', true); show('resContent', false);
+  show('btnSave', false); show('btnPdfSingle', false);
+
+  resetKdv(); resetKapora(); resetExtSide(); updateSymbols(); onTx();
+  currentCalc = null;
+  el('txDate').value = new Date().toISOString().split('T')[0];
+  editingId = null; show('editBanner', false);
+  el('btnCalcIcon').className = 'fas fa-calculator';
+  el('btnCalcLbl').textContent = 'Hesapla';
+}
+
+/* ═══════════════ HISTORY PERSISTENCE ═══════════════ */
+function persistHistory() {
+  localStorage.setItem('gmk_pro_hybrid_storage', JSON.stringify(history));
+  if (fbConnected && historyRef) {
+    const obj = {};
+    history.forEach(r => { obj[r.id] = r; });
+    historyRef.set(obj).catch(e => console.error('Firebase yazma hatası:', e));
+  }
+}
+
+function initAppSync() {
+  const localData = localStorage.getItem('gmk_pro_hybrid_storage');
+  if (localData) {
+    try { history = JSON.parse(localData); loadHistory(); updateStats(); } catch (e) { history = []; }
+  }
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    firebase.auth().signInAnonymously().then(u => {
+      fbUid = u.user.uid;
+      historyRef = firebase.database().ref('users/' + fbUid + '/history');
+      setFbStatus('online', 'Bulut Aktif');
+      fbConnected = true;
+      show('fbWarnEl', false);
+      historyRef.on('value', snap => {
+        const data = snap.val();
+        if (data) {
+          history = Object.values(data).sort((a, b) => b.id - a.id);
+          localStorage.setItem('gmk_pro_hybrid_storage', JSON.stringify(history));
+          loadHistory(); updateStats();
+        } else if (history.length > 0) {
+          const obj = {};
+          history.forEach(i => { obj[i.id] = i; });
+          historyRef.set(obj);
+        }
+      });
+    }).catch(() => { setFbStatus('offline', 'Yerel Mod (Offline)'); show('fbWarnEl', true); });
+  } catch (e) { setFbStatus('offline', 'Yerel Mod (Offline)'); show('fbWarnEl', true); }
+}
+
+function saveToHistory() {
+  if (!currentCalc) { alert('Önce hesaplama yapın.'); return; }
+  const rec = { ...currentCalc };
+  const idx = history.findIndex(h => h.id === rec.id);
+  if (idx >= 0) history[idx] = rec; else history.unshift(rec);
+  persistHistory(); loadHistory(); updateStats(); resetForm();
+}
+
+function deleteItem(id) {
+  if (!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
+  history = history.filter(h => h.id !== id);
+  persistHistory(); loadHistory(); updateStats();
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const p = d.split('-');
+  return p.length === 3 ? p[2]+'.'+p[1]+'.'+p[0] : d;
+}
+
+function loadHistory() {
+  if (!history.length) { show('histEmpty', true); show('histContent', false); show('btnHistPdf', false); return; }
+  show('histEmpty', false); show('histContent', true); show('btnHistPdf', true);
+
+  el('histBody').innerHTML = history.map((r, i) => {
+    const rowNum  = history.length - i;   // ← en yeni = en büyük numara
+    const saleTL  = toTL(r.saleAmt || 0, r.saleCur || 'TL', r);
+    const offTL   = (r.totalOff || 0) + (r.kapOff || 0);
+    const mineTL  = (r.totalMine || 0) + (r.kapMine || 0);
+    const kapTL   = r.kapAmtTL || 0;
+    const extTL   = (r.totalExt || 0);
+    const dTip    = r.descTxt ? ` title="${r.descTxt.replace(/"/g,'&quot;')}"` : '';
+    const phoneTip= r.cPhone ? ` title="Tel: ${r.cPhone}"` : '';
+    const txB     = r.txType === 'satis' ? 'b-satis' : 'b-kira';
+
+    // Satış/kira bedeli: TL büyük, altında küçük parantezde orijinal döviz
+    let saleDisplay = '—';
+    if (r.saleAmt > 0) {
+      if (r.saleCur && r.saleCur !== 'TL') {
+        saleDisplay = `${fmtTL(saleTL)}<br><span style="font-size:10px;color:var(--muted)">(${fmt(r.saleAmt, r.saleCur)})</span>`;
+      } else {
+        saleDisplay = fmtTL(saleTL);
+      }
+    }
+
+    // Komisyon: TL + altında orijinal döviz
+    let commDisplay = '—';
+    if (r.grandTotal > 0) {
+      commDisplay = fmtTL(r.grandTotal);
+      if (!r.isKira) {
+        const parts = [];
+        if (r.bTotal > 0 && r.bCur && r.bCur !== 'TL' && r.bOrigAmt) parts.push('A: ' + fmt(r.bOrigAmt, r.bCur));
+        if (r.sTotal > 0 && r.sCur && r.sCur !== 'TL' && r.sOrigAmt) parts.push('S: ' + fmt(r.sOrigAmt, r.sCur));
+        if (parts.length) commDisplay += `<br><span style="font-size:10px;color:var(--muted)">(${parts.join(' • ')})</span>`;
+      } else if (r.rCur && r.rCur !== 'TL' && r.rOrigAmt) {
+        commDisplay += `<br><span style="font-size:10px;color:var(--muted)">(${fmt(r.rOrigAmt, r.rCur)})</span>`;
+      }
+    }
+
+    // Yardımcı: TL + altında döviz (oransal)
+    function histFx(tlVal, origTotal, origAmt, origCur) {
+      if (!origCur || origCur === 'TL' || !origAmt || !origTotal || origTotal === 0) return fmtTL(tlVal);
+      const origShare = origAmt * (tlVal / origTotal);
+      if (origShare < 0.01) return fmtTL(tlVal);
+      return `${fmtTL(tlVal)}<br><span style="font-size:10px;color:var(--muted)">(${fmt(origShare, origCur)})</span>`;
+    }
+
+    // Her tarafın döviz bilgisi
+    const bFx = (!r.isKira && r.bCur && r.bCur !== 'TL' && r.bOrigAmt && r.bTotal) ? { amt: r.bOrigAmt, cur: r.bCur, total: r.bTotal } : null;
+    const sFx = (!r.isKira && r.sCur && r.sCur !== 'TL' && r.sOrigAmt && r.sTotal) ? { amt: r.sOrigAmt, cur: r.sCur, total: r.sTotal } : null;
+    const rFx = (r.isKira  && r.rCur && r.rCur !== 'TL' && r.rOrigAmt && r.rTotal) ? { amt: r.rOrigAmt, cur: r.rCur, total: r.rTotal } : null;
+    const anyFx = bFx || sFx || rFx;
+
+    // Ofise kalan döviz
+    let offDisplay = fmtTL(offTL);
+    if (anyFx) {
+      const parts = [];
+      if (bFx && r.bOff > 0) parts.push(fmt(bFx.amt * (r.bOff / bFx.total), bFx.cur));
+      if (sFx && r.sOff > 0) parts.push(fmt(sFx.amt * (r.sOff / sFx.total), sFx.cur));
+      if (rFx && r.rOff > 0) parts.push(fmt(rFx.amt * (r.rOff / rFx.total), rFx.cur));
+      if (parts.length) offDisplay += `<br><span style="font-size:10px;color:var(--muted)">(${parts.join(' + ')})</span>`;
+    }
+
+    // Dış danışman döviz
+    let extDisplay = '—';
+    if (extTL > 0) {
+      let extParts = [];
+      if (bFx && r.bExt > 0) extParts.push(fmt(bFx.amt * (r.bExt / bFx.total), bFx.cur));
+      if (sFx && r.sExt > 0) extParts.push(fmt(sFx.amt * (r.sExt / sFx.total), sFx.cur));
+      if (rFx && r.rExt > 0) extParts.push(fmt(rFx.amt * (r.rExt / rFx.total), rFx.cur));
+      extDisplay = `<span class="to">${fmtTL(extTL)}${extParts.length ? `<br><span style="font-size:10px;opacity:.8">(${extParts.join(' + ')})</span>` : ''}</span>`;
+    }
+
+    // Bana kalan döviz
+    let mineDisplay = fmtTL(mineTL);
+    if (anyFx) {
+      const mineParts = [];
+      if (bFx && r.bMine > 0) mineParts.push(fmt(bFx.amt * (r.bMine / bFx.total), bFx.cur));
+      if (sFx && r.sMine > 0) mineParts.push(fmt(sFx.amt * (r.sMine / sFx.total), sFx.cur));
+      if (rFx && r.rMine > 0) mineParts.push(fmt(rFx.amt * (r.rMine / rFx.total), rFx.cur));
+      if (mineParts.length) mineDisplay = `${fmtTL(mineTL)}<br><span style="font-size:10px;color:var(--muted)">(${mineParts.join(' + ')})</span>`;
+    }
+
+    const kapDisplay = kapTL > 0
+      ? (r.kapCur && r.kapCur !== 'TL'
+        ? `${fmtTL(kapTL)}<br><span style="font-size:10px;color:var(--muted)">(${fmt(r.kapAmtOrig||0, r.kapCur)})</span>`
+        : fmtTL(kapTL))
+      : '—';
+
+    return `<tr>
+      <td style="color:var(--muted);font-weight:600">${rowNum}</td>
+      <td style="white-space:nowrap;color:var(--muted);font-size:11px">${fmtDate(r.txDate)}</td>
+      <td><strong${dTip}${phoneTip}>${r.cName}</strong></td>
+      <td><span class="badge b-prop">${propLbl[r.propType]||'—'}</span></td>
+      <td style="color:var(--muted);font-size:11px">${r.locD||'—'}</td>
+      <td><span class="badge ${txB}">${r.txType==='satis'?'Satış':'Kiralama'}</span></td>
+      <td>${saleDisplay}</td>
+      <td>${commDisplay}</td>
+      <td class="tb">${offDisplay}</td>
+      <td>${extDisplay}</td>
+      <td>${kapDisplay}</td>
+      <td class="tg">${mineDisplay}</td>
+      <td style="display:flex;gap:4px">
+        <button class="ibtn" title="Düzenle" onclick="openEdit(${r.id})"><i class="fas fa-pen"></i></button>
+        <button class="ibtn del" title="Sil" onclick="deleteItem(${r.id})"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function updateStats() {
+  if (!history.length) { el('statsEl').classList.add('dn'); return; }
+  el('statsEl').classList.remove('dn');
+  txt('stCount', history.length);
+  const totalSale = history.reduce((a,r) => a+toTL(r.saleAmt||0,r.saleCur||'TL',r),0);
+  const totalComm = history.reduce((a,r) => a+(r.grandTotal||0),0);
+  const totalOff  = history.reduce((a,r) => a+(r.totalOff||0)+(r.kapOff||0),0);
+  const totalMine = history.reduce((a,r) => a+(r.totalMine||0)+(r.kapMine||0),0);
+  txt('stSales', fmtKTL(totalSale));
+  txt('stComm',  fmtKTL(totalComm));
+  txt('stOff',   fmtKTL(totalOff));
+  txt('stMine',  fmtKTL(totalMine));
+}
+
+function openEdit(id) {
+  const r = history.find(h => h.id === id);
+  if (!r) return;
+  resetForm();
+  editingId = id;
+  el('cName').value   = r.cName || '';
+  el('cPhone').value  = r.cPhone || '';
+  el('txDate').value  = r.txDate || '';
+  el('txType').value  = r.txType || 'satis';
+  el('propType').value= r.propType || 'daire';
+  el('locD').value    = r.locD || '';
+  el('locC').value    = r.locC || '';
+  el('descTxt').value = r.descTxt || '';
+  el('saleCur').value = r.saleCur || 'TL';
+  el('saleAmt').value = r.saleAmt || '';
+  onTx();
+
+  if (!r.isKira) {
+    el('bCur').value = r.bCur || 'TL'; el('sCur').value = r.sCur || 'TL';
+    if (r.bTotal>0) { el('btAmt').checked=true; el('btLbl').textContent='Tutar'; el('buyerComm').value=r.bOrigAmt||r.bTotal; }
+    if (r.sTotal>0) { el('stAmt').checked=true; el('stLbl').textContent='Tutar'; el('sellerComm').value=r.sOrigAmt||r.sTotal; }
+  } else {
+    el('rCur').value = r.rCur || 'TL';
+    el('rtAmt').checked=true; el('rtLbl').textContent='Tutar';
+    el('renterComm').value = r.rOrigAmt||r.rTotal||'';
+    el('renterComm').removeAttribute('readonly');
+  }
+  if (r.kdvBuyer)  toggleKdv('buyer');
+  if (r.kdvSeller) toggleKdv('seller');
+  if (r.kdvRenter) toggleKdv('renter');
+  if ((r.kapAmtTL||0)>0) {
+    if (!kapOn) toggleKapora();
+    el('kapAmt').value=r.kapAmtOrig||0; el('kapDesc').value=r.kapDesc||'';
+    el('kapCur').value=r.kapCur||'TL'; el('kapSym').textContent=sym(r.kapCur||'TL');
+  }
+  const scEl = el('sc' + r.sc);
+  if (scEl) { scEl.checked=true; onSc(); }
+  updateSymbols();
+  show('editBanner', true);
+  el('editBannerName').textContent = '→ '+r.cName+(r.txDate?' ('+fmtDate(r.txDate)+')':'');
+  el('btnCalcIcon').className = 'fas fa-floppy-disk';
+  el('btnCalcLbl').textContent = 'Güncelle';
+  show('btnSave', false); show('btnPdfSingle', false);
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function cancelEdit() { editingId = null; resetForm(); }
+
+/* ═══════════════ PDF MODAL ═══════════════ */
+let pdfFilteredRecs = [];
+
+const PDF_MODE_DESC = {
+  full:       'Tam Detay: İşlem kartları + istatistik özeti + döviz dökümü + tüm bölümler',
+  summary:    'Özet & İstatistik: Toplamlar, trend tablosu, oran analizleri, döviz döküm — işlem kartları yok',
+  earnings:   'Kazançlarım: Net kazanç odaklı, yıllık/aylık performans, top işlemler, verimlilik skoru',
+  comparison: 'Karşılaştırmalı: Aylık büyüme oranı, satış vs kiralama trendi, dönemsel analiz',
+  client:     'Müşteri Odaklı: Müşteri ve mülk bilgileri ön planda, komisyon rakamları gizli',
+  custom:     'Özel Seçim: Bölümler sekmesinden istediğiniz bölümleri manuel seçin'
+};
+
+function switchPdfTab(tab, btn) {
+  document.querySelectorAll('.pdf-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pdf-tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  el('ptab-' + tab).classList.add('active');
+}
+
+function onPdfModeChange() {
+  var _pmc = document.querySelector('input[name="pdfMode"]:checked');
+  const mode = (_pmc ? _pmc.value : '') || 'full';
+  txt('modePreviewTxt', PDF_MODE_DESC[mode]);
+  const isCustom = mode === 'custom';
+  txt('customModeNote', isCustom ? '⚙️ Özel mod aktif — aşağıdan seçin' : '');
+  // Bölümleri moda göre otomatik ayarla
+  const sects = { secCover:true, secStats:true, secTrend:true, secCurrency:true, secTop:true, secExt:true, secTxList:true, secNotes:true, secPerf:true, secDate:true };
+  if (mode === 'summary')    { sects.secTxList=false; sects.secNotes=false; }
+  if (mode === 'earnings')   { sects.secTxList=false; sects.secNotes=false; sects.secExt=false; }
+  if (mode === 'comparison') { sects.secTxList=false; sects.secNotes=false; sects.secPerf=false; }
+  if (mode === 'client')     { sects.secStats=false; sects.secTrend=false; sects.secCurrency=false; sects.secTop=false; sects.secExt=false; sects.secPerf=false; }
+  if (!isCustom) {
+    Object.keys(sects).forEach(k => {
+      const cb = el(k); if (!cb) return;
+      cb.checked = sects[k];
+      cb.closest('.sect-item').classList.toggle('checked', sects[k]);
+    });
+  }
+}
+
+function toggleSect(div, cbId) {
+  const cb = el(cbId); cb.checked = !cb.checked;
+  div.classList.toggle('checked', cb.checked);
+}
+
+function setDatePreset(preset, chip) {
+  document.querySelectorAll('.df-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const iso = d => d.toISOString().split('T')[0];
+  let from='', to='';
+  if (preset==='thisYear')  { from=now.getFullYear()+'-01-01'; to=iso(now); }
+  if (preset==='lastYear')  { from=(now.getFullYear()-1)+'-01-01'; to=(now.getFullYear()-1)+'-12-31'; }
+  if (preset==='thisMonth') { from=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-01'; to=iso(now); }
+  if (preset==='last3')     { const d=new Date(now); d.setMonth(d.getMonth()-3); from=iso(d); to=iso(now); }
+  if (preset==='last6')     { const d=new Date(now); d.setMonth(d.getMonth()-6); from=iso(d); to=iso(now); }
+  el('pdfDateFrom').value = from; el('pdfDateTo').value = to;
+  applyDateFilter();
+}
+
+function clearDateFilter() {
+  el('pdfDateFrom').value=''; el('pdfDateTo').value='';
+  document.querySelectorAll('.df-chip').forEach(c=>c.classList.remove('active'));
+  var _ac = el('allChip'); if (_ac) _ac.classList.add('active');
+  applyDateFilter();
+}
+
+function applyDateFilter() {
+  const from = el('pdfDateFrom').value;
+  const to   = el('pdfDateTo').value;
+  const wantSatis = el('pfSatis').checked;
+  const wantKira  = el('pfKira').checked;
+  pdfFilteredRecs = history.filter(r => {
+    if (r.txType==='satis'    && !wantSatis) return false;
+    if (r.txType==='kiralama' && !wantKira)  return false;
+    if (from && r.txDate && r.txDate < from) return false;
+    if (to   && r.txDate && r.txDate > to)   return false;
+    return true;
+  });
+  renderPdfList();
+}
+
+function renderPdfList() {
+  const list = el('rptList');
+  list.innerHTML = pdfFilteredRecs.map((r, i) => {
+    const mineTL = (r.totalMine||0)+(r.kapMine||0);
+    const badge  = r.txType==='satis'
+      ? '<span class="rpt-item-badge" style="background:rgba(47,129,247,.15);color:var(--blue)">Satış</span>'
+      : '<span class="rpt-item-badge" style="background:rgba(227,179,65,.15);color:var(--orange)">Kiralama</span>';
+    return `<div class="rpt-item" onclick="el('rptChk${i}').checked=!el('rptChk${i}').checked;updateSelCount()">
+      <input type="checkbox" id="rptChk${i}" checked onclick="event.stopPropagation();updateSelCount()">
+      <div class="rpt-item-info">
+        <strong>${r.cName} — ${propLbl[r.propType]||''}</strong>
+        <span>${fmtDate(r.txDate)||'Tarihsiz'} • ${[r.locD,r.locC].filter(Boolean).join(', ')||'—'} • Net: <strong style="color:var(--green)">${fmtTL(mineTL)}</strong></span>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('') || '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px"><i class="fas fa-filter" style="display:block;font-size:20px;opacity:.3;margin-bottom:8px"></i>Filtreye uyan kayıt yok</div>';
+  updateSelCount();
+}
+
+function updateSelCount() {
+  const total = pdfFilteredRecs.length;
+  const sel   = pdfFilteredRecs.filter((_,i) => { const c=el('rptChk'+i); return c&&c.checked; }).length;
+  txt('selCountBadge', sel + ' / ' + total + ' seçili');
+  el('chkSelAll').checked = sel === total && total > 0;
+  el('chkSelAll').indeterminate = sel > 0 && sel < total;
+}
+
+function toggleSelAll(v) {
+  pdfFilteredRecs.forEach((_,i) => { const c=el('rptChk'+i); if(c) c.checked=v; });
+  updateSelCount();
+}
+
+function openPdfModal() {
+  if (!history.length) { alert('Rapor almak için önce kayıt ekleyin.'); return; }
+  // Ajans bilgilerini localStorage'dan yükle
+  const saved = localStorage.getItem('gmk_agency');
+  if (saved) {
+    try {
+      const a = JSON.parse(saved);
+      ['Name','Adv','Phone','Email','Addr','Lic'].forEach(k => { const e=el('agency'+k); if(e&&a[k]) e.value=a[k]; });
+    } catch(e) {}
+  }
+  pdfFilteredRecs = [...history];
+  renderPdfList();
+  onPdfModeChange();
+  // Tab sıfırla
+  switchPdfTab('mode', document.querySelector('.pdf-tab'));
+  el('pdfModal').classList.remove('dn');
+}
+
+function closePdfModal() { el('pdfModal').classList.add('dn'); }
+
+function exportSinglePdf() {
+  if (!currentCalc) return;
+  pdfFilteredRecs = [currentCalc];
+  generatePdfFromSelected();
+}
+
+function generatePdfReport() {
+  // Ajans bilgilerini kaydet
+  const agency = {};
+  ['Name','Adv','Phone','Email','Addr','Lic'].forEach(k => { var _ae=el('agency'+k); agency[k] = (_ae ? _ae.value : '') || ''; });
+  localStorage.setItem('gmk_agency', JSON.stringify(agency));
+  const selected = pdfFilteredRecs.filter(function(_,i){ const c=el('rptChk'+i); return c&&c.checked; });
+  if (!selected.length) { alert('En az bir kayıt seçin.'); return; }
+  closePdfModal();
+  var _pmc2 = document.querySelector('input[name="pdfMode"]:checked');
+  const mode = (_pmc2 ? _pmc2.value : '') || 'full';
+  const sects = {};
+  ['Cover','Stats','Trend','Currency','Top','Ext','TxList','Notes','Perf','Date'].forEach(function(k) {
+    var _se = el('sec'+k); sects[k.toLowerCase()] = _se ? _se.checked : true;
+  });
+  generatePdfFromRecords(selected, mode, sects, agency);
+}
+
+/* ═══════════════ PDF GENERATİON ═══════════════ */
+function generatePdfFromRecords(records, mode, sects, agency) {
+  const now = new Date();
+  const nowStr = now.toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'}) + ' ' + now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+
+  // ── Aggregate hesaplamalar ──
+  const totalGross = records.reduce((a,r)=>a+(r.grandTotal||0),0);
+  const totalOff   = records.reduce((a,r)=>a+(r.totalOff||0)+(r.kapOff||0),0);
+  const totalMine  = records.reduce((a,r)=>a+(r.totalMine||0)+(r.kapMine||0),0);
+  const totalSale  = records.reduce((a,r)=>a+toTL(r.saleAmt||0,r.saleCur||'TL',r),0);
+  const totalExt   = records.reduce((a,r)=>a+(r.totalExt||0),0);
+  const totalKap   = records.reduce((a,r)=>a+(r.kapAmtTL||0),0);
+  const satisRec   = records.filter(r=>r.txType==='satis');
+  const kiraRec    = records.filter(r=>r.txType==='kiralama');
+
+  // Döviz bazlı toplamlar — kayıt anı kuru (sabit) ve bugünkü kur (dinamik)
+  const tlSums      = { TL:0, USD:0, EUR:0 };  // orijinal döviz tutarlar
+  const tlRecorded  = { TL:0, USD:0, EUR:0 };  // kayıt anı kuru TL
+  const tlLive      = { TL:0, USD:0, EUR:0 };  // bugünkü kur TL
+  records.forEach(r => {
+    const sides = r.isKira
+      ? [{amt: r.rOrigAmt||0, cur: r.rCur||'TL'}]
+      : [{amt: r.bOrigAmt||0, cur: r.bCur||'TL'}, {amt: r.sOrigAmt||0, cur: r.sCur||'TL'}];
+    sides.forEach(s => {
+      if (!s.amt) return;
+      const cur = s.cur||'TL';
+      tlSums[cur]     = (tlSums[cur]||0)     + s.amt;
+      tlRecorded[cur] = (tlRecorded[cur]||0) + toTL(s.amt, cur, r);      // kayıt anı kuru
+      tlLive[cur]     = (tlLive[cur]||0)     + toTLLive(s.amt, cur);     // bugünkü kur
+    });
+  });
+  // Geriye dönük uyumluluk
+  const tlTotals = tlRecorded;
+
+  // Aylık trend
+  const monthMap = {};
+  records.forEach(r => {
+    if (!r.txDate) return;
+    const m = r.txDate.substring(0,7);
+    if (!monthMap[m]) monthMap[m] = { gross:0, mine:0, count:0, satis:0, kira:0 };
+    monthMap[m].gross += r.grandTotal||0;
+    monthMap[m].mine  += (r.totalMine||0)+(r.kapMine||0);
+    monthMap[m].count++;
+    if (r.txType==='satis') monthMap[m].satis++; else monthMap[m].kira++;
+  });
+  const months = Object.keys(monthMap).sort();
+
+  // Top 5
+  const top5 = [...records].sort((a,b)=>((b.totalMine||0)+(b.kapMine||0))-((a.totalMine||0)+(a.kapMine||0))).slice(0,5);
+
+  // Performans skoru (basit algoritma)
+  const avgComm = totalGross>0 && totalSale>0 ? (totalGross/totalSale*100) : 0;
+  const myRatio = totalGross>0 ? (totalMine/totalGross*100) : 0;
+  const extRatio= totalGross>0 ? (totalExt/totalGross*100) : 0;
+  const perfScore = Math.min(100, Math.round(myRatio * 0.6 + (100-extRatio)*0.25 + Math.min(records.length,20)*0.75));
+
+  // Yıllık kazanç (yıllar arası)
+  const yearMap = {};
+  records.forEach(r => {
+    if (!r.txDate) return;
+    const y = r.txDate.substring(0,4);
+    yearMap[y] = (yearMap[y]||0) + (r.totalMine||0)+(r.kapMine||0);
+  });
+  const years = Object.keys(yearMap).sort();
+  let yoyGrowth = null;
+  if (years.length >= 2) {
+    const lastY = yearMap[years[years.length-1]];
+    const prevY = yearMap[years[years.length-2]];
+    yoyGrowth = prevY > 0 ? ((lastY-prevY)/prevY*100).toFixed(1) : null;
+  }
+
+  // ── HTML oluştur ──
+  const agName  = (agency && agency.Name)  ? agency.Name  : '';
+  const agAdv   = (agency && agency.Adv)   ? agency.Adv   : '';
+  const agPhone = (agency && agency.Phone) ? agency.Phone : '';
+  const agEmail = (agency && agency.Email) ? agency.Email : '';
+  const agAddr  = (agency && agency.Addr)  ? agency.Addr  : '';
+  const agLic   = (agency && agency.Lic)   ? agency.Lic   : '';
+
+  // Renk paleti (ajans tipi - profesyonel mavi)
+  const C = { primary:'#1e3a5f', accent:'#2563eb', green:'#16a34a', red:'#dc2626', orange:'#d97706', purple:'#7c3aed', muted:'#64748b', light:'#f8fafc', border:'#e2e8f0' };
+
+  const renderTxCard = r => {
+    if (mode==='client') return renderClientCard(r);
+    const mineTL = (r.totalMine||0)+(r.kapMine||0);
+    const offTL  = (r.totalOff||0)+(r.kapOff||0);
+    const extTL  = r.totalExt||0;
+    const kapTL  = r.kapAmtTL||0;
+    const loc    = [r.locD,r.locC].filter(Boolean).join(', ')||'—';
+    const saleOrig = r.saleAmt>0 ? fmt(r.saleAmt,r.saleCur||'TL') : '—';
+    const saleTLval= r.saleAmt>0 ? fmtTL(toTL(r.saleAmt,r.saleCur||'TL',r)) : '';
+    let commParts = [];
+    if (!r.isKira) {
+      if (r.bTotal>0) commParts.push(`Alıcı: ${fmtWithOrig(r.bTotal,r.bOrigAmt,r.bCur,false)}`);
+      if (r.sTotal>0) commParts.push(`Satıcı: ${fmtWithOrig(r.sTotal,r.sOrigAmt,r.sCur,false)}`);
+    } else {
+      commParts.push(fmtWithOrig(r.rTotal,r.rOrigAmt,r.rCur,false));
+    }
+    const borderColor = r.txType==='satis' ? C.accent : C.orange;
+    let extRows = '';
+    if ((r.extBuyerAmt||0)>0) extRows += `<tr><td>Dış Danışman – Alıcı (${r.extBuyerName||''})</td><td style="text-align:right;color:${C.red}">- ${fmtTL(r.extBuyerAmt)}</td></tr>`;
+    if ((r.extSellerAmt||0)>0) extRows += `<tr><td>Dış Danışman – Satıcı (${r.extSellerName||''})</td><td style="text-align:right;color:${C.red}">- ${fmtTL(r.extSellerAmt)}</td></tr>`;
+    if ((r.extRenterAmt||0)>0) extRows += `<tr><td>Dış Danışman (${r.extRenterName||''})</td><td style="text-align:right;color:${C.red}">- ${fmtTL(r.extRenterAmt)}</td></tr>`;
+    const showNotes = (sects && sects.notes) && r.descTxt;
+    return `<div style="border:1px solid ${C.border};border-radius:10px;margin-bottom:20px;overflow:hidden;break-inside:avoid;border-left:5px solid ${borderColor}">
+      <div style="background:${C.light};padding:11px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid ${C.border}">
+        <div>
+          <span style="font-weight:700;font-size:14px;color:${C.primary}">${r.cName}</span>
+          <span style="margin-left:8px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:${r.txType==='satis'?'rgba(37,99,235,.12)':'rgba(217,119,6,.12)'};color:${r.txType==='satis'?C.accent:C.orange}">${r.txType==='satis'?'SATIŞ':'KİRALAMA'}</span>
+          <span style="margin-left:6px;font-size:10px;background:#f1f5f9;color:#475569;padding:2px 7px;border-radius:20px;font-weight:600">${propLbl[r.propType]||''}</span>
+        </div>
+        <span style="font-size:11px;color:${C.muted}">${fmtDate(r.txDate)||'—'}</span>
+      </div>
+      <div style="padding:16px">
+        <div style="display:flex;gap:30px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed ${C.border}">
+          <div><div style="font-size:10px;color:${C.muted};text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Portföy Bedeli</div>
+            <div style="font-size:16px;font-weight:700;color:${C.primary}">${saleOrig}</div>
+            ${saleTLval&&r.saleCur!=='TL'?`<div style="font-size:10px;color:${C.muted}">${saleTLval}</div>`:''}
+          </div>
+          <div><div style="font-size:10px;color:${C.muted};text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Toplam Hizmet Bedeli</div>
+            <div style="font-size:16px;font-weight:700;color:${C.accent}">${commParts.join(' + ')}</div>
+          </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:${C.light}"><th style="padding:7px 10px;text-align:left;font-size:10px;color:${C.muted};text-transform:uppercase;border-bottom:1px solid ${C.border}">Kalem</th><th style="padding:7px 10px;text-align:right;font-size:10px;color:${C.muted};text-transform:uppercase;border-bottom:1px solid ${C.border}">Tutar</th></tr></thead>
+          <tbody>
+            ${extRows}
+            ${kapTL>0?`<tr style="background:#fefce8"><td style="padding:7px 10px;border-bottom:1px solid ${C.border}">Kapora/Ekstra (${r.kapDesc||''})</td><td style="padding:7px 10px;text-align:right;color:${C.purple};border-bottom:1px solid ${C.border}">+ ${fmtTL(kapTL)}</td></tr>`:''}
+            <tr style="background:${C.light}"><td style="padding:7px 10px;border-bottom:1px solid ${C.border};color:${C.muted}">Ofis Payı Kesintisi</td><td style="padding:7px 10px;text-align:right;color:${C.muted};border-bottom:1px solid ${C.border}">- ${fmtTL(offTL)}</td></tr>
+            <tr style="background:#f0fdf4"><td style="padding:9px 10px;font-weight:700;color:${C.green}">✅ Net Kazanç</td><td style="padding:9px 10px;text-align:right;font-weight:700;font-size:15px;color:${C.green}">${fmtTL(mineTL)}</td></tr>
+          </tbody>
+        </table>
+        ${showNotes?`<div style="margin-top:10px;padding:9px 12px;background:#fffbeb;border-radius:6px;font-size:11px;color:#92400e;border:1px solid #fef3c7"><strong>Not:</strong> ${r.descTxt}</div>`:''}
+        <div style="margin-top:10px;font-size:10px;color:${C.muted};border-top:1px solid ${C.border};padding-top:8px">📍 ${loc}${r.cPhone?' | 📞 '+r.cPhone:''}</div>
+      </div>
+    </div>`;
+  };
+
+  const renderClientCard = r => {
+    const loc = [r.locD,r.locC].filter(Boolean).join(', ')||'—';
+    return `<div style="border:1px solid ${C.border};border-radius:10px;margin-bottom:14px;overflow:hidden;break-inside:avoid">
+      <div style="background:${C.light};padding:10px 16px;display:flex;justify-content:space-between;border-bottom:1px solid ${C.border}">
+        <strong style="color:${C.primary}">${r.cName}</strong>
+        <span style="font-size:11px;color:${C.muted}">${fmtDate(r.txDate)||'—'}</span>
+      </div>
+      <div style="padding:14px 16px;font-size:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><strong style="color:${C.muted};font-size:10px;display:block;text-transform:uppercase">Mülk Türü</strong>${propLbl[r.propType]||'—'}</div>
+          <div><strong style="color:${C.muted};font-size:10px;display:block;text-transform:uppercase">İşlem</strong>${r.txType==='satis'?'Satış':'Kiralama'}</div>
+          <div><strong style="color:${C.muted};font-size:10px;display:block;text-transform:uppercase">Konum</strong>${loc}</div>
+          ${r.cPhone?`<div><strong style="color:${C.muted};font-size:10px;display:block;text-transform:uppercase">Telefon</strong>${r.cPhone}</div>`:''}
+          ${r.saleAmt>0?`<div><strong style="color:${C.muted};font-size:10px;display:block;text-transform:uppercase">Bedel</strong>${fmt(r.saleAmt,r.saleCur||'TL')}</div>`:''}
+          ${r.descTxt?`<div style="grid-column:1/-1"><strong style="color:${C.muted};font-size:10px;display:block;text-transform:uppercase">Not</strong>${r.descTxt}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  };
+
+  // ── Bölüm: İstatistik Özeti ──
+  const secStats = (sects && sects.stats) ? `
+  <div class="pdf-section">
+    <div class="pdf-sec-title">📊 İstatistik Özeti</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+      ${[
+        {lbl:'Toplam İşlem', val:records.length+' adet', sub:'Satış:'+satisRec.length+' • Kira:'+kiraRec.length, c:C.accent},
+        {lbl:'Toplam Ciro', val:fmtTL(totalSale), sub:'Portföy toplamı', c:C.primary},
+        {lbl:'Brüt Komisyon', val:fmtTL(totalGross), sub:'Ort. oran: %'+avgComm.toFixed(1), c:C.orange},
+        {lbl:'Net Kazancım', val:fmtTL(totalMine), sub:'%'+myRatio.toFixed(1)+' komisyondan', c:C.green},
+        {lbl:'Ofise Kalan', val:fmtTL(totalOff), sub:'%'+(totalGross>0?(totalOff/totalGross*100).toFixed(1):'0'), c:C.muted},
+        {lbl:'Dış Dan. Kesinti', val:fmtTL(totalExt), sub:'%'+(totalGross>0?extRatio.toFixed(1):'0')+' brütten', c:C.red},
+        {lbl:'Kapora/Ekstra', val:fmtTL(totalKap), sub:'Toplam ekstra gelir', c:C.purple},
+        yoyGrowth!==null ? {lbl:'Yıllık Büyüme', val:(yoyGrowth>0?'+':'')+yoyGrowth+'%', sub:years[years.length-2]+'→'+years[years.length-1], c:parseFloat(yoyGrowth)>=0?C.green:C.red} : {lbl:'Verimlilik Skoru', val:perfScore+'/100', sub:'Bana kalan+ofis dengesi', c:C.accent}
+      ].map(s=>`<div style="background:${C.light};border:1px solid ${C.border};border-radius:9px;padding:12px;border-top:3px solid ${s.c}">
+        <div style="font-size:10px;color:${C.muted};text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">${s.lbl}</div>
+        <div style="font-size:16px;font-weight:700;color:${s.c}">${s.val}</div>
+        <div style="font-size:10px;color:${C.muted};margin-top:2px">${s.sub}</div>
+      </div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:${C.light};border:1px solid ${C.border};border-radius:9px;padding:12px">
+        <div style="font-size:11px;font-weight:700;color:${C.primary};margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Dağılım (TL)</div>
+        ${[
+          {lbl:'Bana Kalan Net', val:totalMine, pct:totalGross>0?(totalMine/totalGross*100).toFixed(1):0, c:C.green},
+          {lbl:'Ofise Giden', val:totalOff, pct:totalGross>0?(totalOff/totalGross*100).toFixed(1):0, c:C.accent},
+          {lbl:'Dış Dan. Payı', val:totalExt, pct:totalGross>0?extRatio.toFixed(1):0, c:C.red},
+        ].map(row=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid ${C.border}">
+          <span style="font-size:11px;color:${C.muted}">${row.lbl}</span>
+          <div style="text-align:right"><span style="font-size:12px;font-weight:700;color:${row.c}">${fmtTL(row.val)}</span><span style="font-size:10px;color:${C.muted};margin-left:5px">%${row.pct}</span></div>
+        </div>`).join('')}
+      </div>
+      <div style="background:${C.light};border:1px solid ${C.border};border-radius:9px;padding:12px">
+        <div style="font-size:11px;font-weight:700;color:${C.primary};margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Satış vs Kiralama</div>
+        ${[
+          {lbl:'Satış İşlemleri', cnt:satisRec.length, mine:satisRec.reduce((a,r)=>a+(r.totalMine||0)+(r.kapMine||0),0), c:C.accent},
+          {lbl:'Kiralama İşlemleri', cnt:kiraRec.length, mine:kiraRec.reduce((a,r)=>a+(r.totalMine||0)+(r.kapMine||0),0), c:C.orange},
+        ].map(row=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid ${C.border}">
+          <span style="font-size:11px;color:${C.muted}">${row.lbl}</span>
+          <div style="text-align:right"><span style="font-size:12px;font-weight:700;color:${row.c}">${row.cnt} adet</span><div style="font-size:10px;color:${C.muted}">${fmtTL(row.mine)}</div></div>
+        </div>`).join('')}
+        ${records.length>0?`<div style="margin-top:8px;font-size:10px;color:${C.muted}">Ort. İşlem Değeri: <strong>${fmtTL(totalMine/records.length)}</strong></div>`:''}
+      </div>
+    </div>
+  </div>` : '';
+
+  // ── Bölüm: Döviz Dökümü ──
+  const secCurrency = (sects && sects.currency) ? `
+  <div class="pdf-section">
+    <div class="pdf-sec-title">💱 Döviz Bazlı Döküm</div>
+    <div style="font-size:11px;color:${C.muted};margin-bottom:10px">
+      📅 Kayıt anı kurları işlemlere göre değişir &nbsp;|&nbsp;
+      📊 Bugünkü kur: <strong>1 USD = ₺${rates.USD.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong> &nbsp;•&nbsp; <strong>1 EUR = ₺${rates.EUR.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:${C.primary};color:#fff">
+        <th style="padding:9px 12px;text-align:left">Para Birimi</th>
+        <th style="padding:9px 12px;text-align:right">Orijinal Toplam</th>
+        <th style="padding:9px 12px;text-align:right">Kayıt Anı TL</th>
+        <th style="padding:9px 12px;text-align:right">Bugünkü TL</th>
+        <th style="padding:9px 12px;text-align:right">Kur Farkı</th>
+      </tr></thead>
+      <tbody>
+        ${['TL','USD','EUR'].filter(cur=>tlSums[cur]>0).map((cur,i)=>{
+          const diff = tlLive[cur] - tlRecorded[cur];
+          const diffSign = diff >= 0 ? '+' : '';
+          const diffColor = diff >= 0 ? C.green : C.red;
+          return `<tr style="background:${i%2===0?C.light:'#fff'}">
+            <td style="padding:9px 12px;font-weight:700;color:${C.primary}">${cur==='TL'?'🇹🇷 Türk Lirası':cur==='USD'?'🇺🇸 US Dolar':'🇪🇺 Euro'}</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:600">${fmt(tlSums[cur],cur)}</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:700;color:${C.accent}">${fmtTL(tlRecorded[cur])}</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:700;color:${C.primary}">${fmtTL(tlLive[cur])}</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:700;color:${cur==='TL'?C.muted:diffColor}">${cur==='TL'?'—':diffSign+fmtTL(diff)}</td>
+          </tr>`;
+        }).join('')}
+        <tr style="background:${C.primary};color:#fff;font-weight:700">
+          <td style="padding:10px 12px">TOPLAM</td>
+          <td style="padding:10px 12px;text-align:right">—</td>
+          <td style="padding:10px 12px;text-align:right;font-size:13px">${fmtTL(Object.values(tlRecorded).reduce((a,b)=>a+b,0))}</td>
+          <td style="padding:10px 12px;text-align:right;font-size:13px">${fmtTL(Object.values(tlLive).reduce((a,b)=>a+b,0))}</td>
+          <td style="padding:10px 12px;text-align:right;font-size:13px">${(()=>{const d=Object.entries(tlLive).filter(([k])=>k!=='TL').reduce((a,[k,v])=>a+(v-(tlRecorded[k]||0)),0);return (d>=0?'+':'')+fmtTL(d);})()}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:${C.muted};text-transform:uppercase;margin-bottom:3px">Net Kazancım (Kayıt)</div>
+        <div style="font-size:16px;font-weight:700;color:${C.green}">${fmtTL(totalMine)}</div>
+      </div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:${C.muted};text-transform:uppercase;margin-bottom:3px">Ofise Kalan (Kayıt)</div>
+        <div style="font-size:16px;font-weight:700;color:${C.accent}">${fmtTL(totalOff)}</div>
+      </div>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:${C.muted};text-transform:uppercase;margin-bottom:3px">Dış Dan. Kesinti</div>
+        <div style="font-size:16px;font-weight:700;color:${C.red}">${fmtTL(totalExt)}</div>
+      </div>
+    </div>
+  </div>` : '';
+
+  // ── Bölüm: Aylık Trend ──
+  const secTrend = (sects && sects.trend) && months.length > 0 ? `
+  <div class="pdf-section">
+    <div class="pdf-sec-title">📈 Aylık Kazanç Trendi</div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead><tr style="background:${C.primary};color:#fff">
+        <th style="padding:8px 10px;text-align:left">Ay</th>
+        <th style="padding:8px 10px;text-align:right">İşlem</th>
+        <th style="padding:8px 10px;text-align:right">Brüt Komisyon</th>
+        <th style="padding:8px 10px;text-align:right">Net Kazancım</th>
+        <th style="padding:8px 10px;text-align:right">Oran</th>
+        <th style="padding:8px 10px;text-align:left">Görsel</th>
+      </tr></thead>
+      <tbody>
+        ${months.map((m,i)=>{
+          const d=monthMap[m];
+          const pctV=d.gross>0?(d.mine/d.gross*100).toFixed(0):0;
+          const barW=totalMine>0?Math.round(d.mine/totalMine*100):0;
+          const [y,mo]=m.split('-');
+          const moName=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'][parseInt(mo)-1];
+          return `<tr style="background:${i%2===0?C.light:'#fff'}">
+            <td style="padding:8px 10px;font-weight:600;color:${C.primary}">${moName} ${y}</td>
+            <td style="padding:8px 10px;text-align:right;color:${C.muted}">${d.count}</td>
+            <td style="padding:8px 10px;text-align:right">${fmtTL(d.gross)}</td>
+            <td style="padding:8px 10px;text-align:right;font-weight:700;color:${C.green}">${fmtTL(d.mine)}</td>
+            <td style="padding:8px 10px;text-align:right;color:${C.muted}">%${pctV}</td>
+            <td style="padding:8px 10px"><div style="height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden"><div style="height:100%;width:${barW}%;background:${C.green};border-radius:5px"></div></div></td>
+          </tr>`;
+        }).join('')}
+        <tr style="background:${C.primary};color:#fff;font-weight:700">
+          <td style="padding:9px 10px">TOPLAM</td>
+          <td style="padding:9px 10px;text-align:right">${records.length}</td>
+          <td style="padding:9px 10px;text-align:right">${fmtTL(totalGross)}</td>
+          <td style="padding:9px 10px;text-align:right">${fmtTL(totalMine)}</td>
+          <td style="padding:9px 10px;text-align:right">%${myRatio.toFixed(0)}</td>
+          <td style="padding:9px 10px"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>` : '';
+
+  // ── Bölüm: Top 5 ──
+  const secTop = (sects && sects.top) && top5.length > 0 ? `
+  <div class="pdf-section">
+    <div class="pdf-sec-title">🏆 En Yüksek Kazanç Getiren İşlemler</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:${C.primary};color:#fff">
+        <th style="padding:9px 12px;text-align:center">#</th>
+        <th style="padding:9px 12px;text-align:left">Müşteri</th>
+        <th style="padding:9px 12px;text-align:left">Tarih</th>
+        <th style="padding:9px 12px;text-align:left">Tür</th>
+        <th style="padding:9px 12px;text-align:right">Komisyon</th>
+        <th style="padding:9px 12px;text-align:right">Net Kazancım</th>
+      </tr></thead>
+      <tbody>
+        ${top5.map((r,i)=>{
+          const mine=(r.totalMine||0)+(r.kapMine||0);
+          const medals=['🥇','🥈','🥉','4.','5.'];
+          return `<tr style="background:${i%2===0?C.light:'#fff'}">
+            <td style="padding:9px 12px;text-align:center;font-size:16px">${medals[i]}</td>
+            <td style="padding:9px 12px;font-weight:700;color:${C.primary}">${r.cName}<div style="font-size:10px;color:${C.muted}">${[r.locD,r.locC].filter(Boolean).join(', ')||''}</div></td>
+            <td style="padding:9px 12px;color:${C.muted}">${fmtDate(r.txDate)||'—'}</td>
+            <td style="padding:9px 12px"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:${r.txType==='satis'?'rgba(37,99,235,.12)':'rgba(217,119,6,.12)'};color:${r.txType==='satis'?C.accent:C.orange}">${r.txType==='satis'?'SATIŞ':'KİRALAMA'}</span></td>
+            <td style="padding:9px 12px;text-align:right">${fmtTL(r.grandTotal||0)}</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:700;color:${C.green}">${fmtTL(mine)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>` : '';
+
+  // ── Bölüm: Dış Danışman Analizi ──
+  const extRecs = records.filter(r=>(r.extBuyerAmt||0)+(r.extSellerAmt||0)+(r.extRenterAmt||0)>0);
+  const secExt = (sects && sects.ext) && extRecs.length > 0 ? `
+  <div class="pdf-section">
+    <div class="pdf-sec-title">🤝 Dış Danışman Kesinti Analizi</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:11px;text-align:center">
+        <div style="font-size:10px;color:${C.muted};text-transform:uppercase;margin-bottom:3px">Toplam Kesinti</div>
+        <div style="font-size:16px;font-weight:700;color:${C.red}">${fmtTL(totalExt)}</div>
+      </div>
+      <div style="background:${C.light};border:1px solid ${C.border};border-radius:8px;padding:11px;text-align:center">
+        <div style="font-size:10px;color:${C.muted};text-transform:uppercase;margin-bottom:3px">Etkilenen İşlem</div>
+        <div style="font-size:16px;font-weight:700;color:${C.primary}">${extRecs.length}</div>
+      </div>
+      <div style="background:${C.light};border:1px solid ${C.border};border-radius:8px;padding:11px;text-align:center">
+        <div style="font-size:10px;color:${C.muted};text-transform:uppercase;margin-bottom:3px">Brütten Oran</div>
+        <div style="font-size:16px;font-weight:700;color:${C.orange}">%${extRatio.toFixed(1)}</div>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead><tr style="background:${C.primary};color:#fff">
+        <th style="padding:8px 10px;text-align:left">Müşteri</th>
+        <th style="padding:8px 10px;text-align:left">Danışman (Alıcı)</th>
+        <th style="padding:8px 10px;text-align:left">Danışman (Satıcı)</th>
+        <th style="padding:8px 10px;text-align:right">Toplam Kesinti</th>
+      </tr></thead>
+      <tbody>
+        ${extRecs.map((r,i)=>`<tr style="background:${i%2===0?C.light:'#fff'}">
+          <td style="padding:8px 10px;font-weight:600">${r.cName} <span style="font-size:10px;color:${C.muted}">(${fmtDate(r.txDate)||'—'})</span></td>
+          <td style="padding:8px 10px;color:${C.red}">${(r.extBuyerAmt||0)>0?(r.extBuyerName||'—')+' ('+fmtTL(r.extBuyerAmt)+')':'—'}</td>
+          <td style="padding:8px 10px;color:${C.red}">${(r.extSellerAmt||0)>0?(r.extSellerName||'—')+' ('+fmtTL(r.extSellerAmt)+')':'—'}</td>
+          <td style="padding:8px 10px;text-align:right;font-weight:700;color:${C.red}">${fmtTL((r.extBuyerAmt||0)+(r.extSellerAmt||0)+(r.extRenterAmt||0))}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>` : '';
+
+  // ── Bölüm: Performans Skoru ──
+  const secPerf = (sects && sects.perf) ? `
+  <div class="pdf-section" style="break-inside:avoid">
+    <div class="pdf-sec-title">🎯 Performans & Verimlilik Analizi</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:${C.primary};text-transform:uppercase;margin-bottom:10px">Verimlilik Skoru</div>
+        <div style="background:${C.light};border:1px solid ${C.border};border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:52px;font-weight:800;color:${perfScore>=75?C.green:perfScore>=50?C.orange:C.red};line-height:1">${perfScore}</div>
+          <div style="font-size:12px;color:${C.muted};margin-top:4px">/100 puan</div>
+          <div style="height:8px;background:#e2e8f0;border-radius:5px;margin-top:12px;overflow:hidden"><div style="height:100%;width:${perfScore}%;background:${perfScore>=75?C.green:perfScore>=50?C.orange:C.red};border-radius:5px;transition:width 1s"></div></div>
+          <div style="font-size:11px;color:${C.muted};margin-top:8px">${perfScore>=75?'Mükemmel performans! 🌟':perfScore>=50?'İyi gidiyorsunuz 👍':'Geliştirme alanı var 💪'}</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:${C.primary};text-transform:uppercase;margin-bottom:10px">Temel Metrikler</div>
+        ${[
+          {lbl:'Ortalama Komisyon Oranı', val:'%'+avgComm.toFixed(2), hint:'(komisyon/satış bedeli)'},
+          {lbl:'Bana Kalan / Brüt Oran', val:'%'+myRatio.toFixed(1), hint:'(net/brüt komisyon)'},
+          {lbl:'Aylık Ort. Kazanç', val:fmtTL(months.length>0?totalMine/months.length:0), hint:''},
+          {lbl:'İşlem Başına Ort. Kazanç', val:fmtTL(records.length>0?totalMine/records.length:0), hint:''},
+          yoyGrowth!==null?{lbl:'Yıllık Büyüme Oranı', val:(parseFloat(yoyGrowth)>=0?'+':'')+yoyGrowth+'%', hint:'(önceki yıla göre)'}:null,
+        ].filter(Boolean).map(m=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid ${C.border}">
+          <span style="font-size:11px;color:${C.muted}">${m.lbl} <span style="font-size:10px">${m.hint}</span></span>
+          <strong style="font-size:12px;color:${C.primary}">${m.val}</strong>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>` : '';
+
+  // ── İşlem kartları listesi ──
+  const secTxList = ((sects && sects.txlist) && (mode==='full'||mode==='custom'||mode==='client')) ? `
+  <div class="pdf-section">
+    <div class="pdf-sec-title">${satisRec.length>0?'🔵 Satış İşlemleri':''}</div>
+    ${satisRec.map(renderTxCard).join('')}
+    ${kiraRec.length>0?`<div class="pdf-sec-title" style="margin-top:20px">🟡 Kiralama İşlemleri</div>${kiraRec.map(renderTxCard).join('')}`:''}
+  </div>` : '';
+
+  // ── Kapak sayfası ──
+  const cover = (sects && sects.cover) ? `
+  <div style="background:linear-gradient(135deg,${C.primary} 0%,#1e40af 100%);padding:50px 40px;border-radius:12px;margin-bottom:28px;color:#fff;break-inside:avoid">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:6px">Finansal Hakediş Raporu</div>
+        <div style="font-size:14px;opacity:.8;margin-bottom:20px">Gayrimenkul Danışmanı Performans Dökümü</div>
+        ${agName?`<div style="font-size:15px;font-weight:700;margin-bottom:4px">🏢 ${agName}</div>`:''}
+        ${agAdv?`<div style="font-size:13px;opacity:.85;margin-bottom:2px">👤 ${agAdv}</div>`:''}
+        ${agPhone?`<div style="font-size:12px;opacity:.7;margin-bottom:2px">📞 ${agPhone}</div>`:''}
+        ${agEmail?`<div style="font-size:12px;opacity:.7;margin-bottom:2px">✉️ ${agEmail}</div>`:''}
+        ${agAddr?`<div style="font-size:12px;opacity:.7;margin-bottom:2px">📍 ${agAddr}</div>`:''}
+        ${agLic?`<div style="font-size:11px;opacity:.6;margin-top:6px">Lisans: ${agLic}</div>`:''}
+      </div>
+      <div style="text-align:right;opacity:.8">
+        <div style="font-size:48px">🏠</div>
+        <div style="font-size:12px;margin-top:8px">${sects.date?nowStr:''}</div>
+        <div style="font-size:12px">${records.length} İşlem</div>
+        <div style="font-size:11px;margin-top:4px">${(records[records.length-1] && records[records.length-1].txDate) ? fmtDate(records[records.length-1].txDate) : ''} – ${(records[0] && records[0].txDate) ? fmtDate(records[0].txDate) : ''}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,.2)">
+      <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Toplam Ciro</div>
+        <div style="font-size:17px;font-weight:800">${fmtTL(totalSale)}</div>
+      </div>
+      <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Brüt Komisyon</div>
+        <div style="font-size:17px;font-weight:800">${fmtTL(totalGross)}</div>
+      </div>
+      <div style="background:rgba(255,255,255,.15);border-radius:8px;padding:12px;text-align:center;border:1px solid rgba(255,255,255,.3)">
+        <div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Net Kazancım</div>
+        <div style="font-size:17px;font-weight:800">${fmtTL(totalMine)}</div>
+      </div>
+    </div>
+  </div>` : '';
+
+  const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Hakediş Raporu</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    *{box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;color:#1e293b;background:#f8fafc;padding:20px;line-height:1.5}
+    .container{max-width:900px;margin:0 auto;background:#fff;padding:36px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+    .pdf-section{margin-bottom:28px}
+    .pdf-sec-title{font-size:14px;font-weight:800;color:#1e3a5f;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.5px}
+    .footer{text-align:center;margin-top:36px;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:16px}
+    @media print{
+      body{background:#fff;padding:0}
+      .container{box-shadow:none;max-width:100%;border:none;border-radius:0}
+      .pdf-section{page-break-inside:avoid}
+    }
+  </style></head><body>
+  <div class="container">
+    ${cover}
+    ${secStats}
+    ${secCurrency}
+    ${secTrend}
+    ${secTop}
+    ${secExt}
+    ${secPerf}
+    ${secTxList}
+    <div class="footer">Bu rapor Gayrimenkul Komisyon Hesaplayıcı tarafından otomatik oluşturulmuştur. ${(sects && sects.date) ? nowStr : ''}</div>
+  </div>
+  </body></html>`;
+
+  const w = window.open('','_blank');
+  if (!w) { alert('Lütfen açılır pencerelere izin verin.'); return; }
+  w.document.write(html); w.document.close();
+  setTimeout(()=>{ w.focus(); w.print(); }, 900);
+}
+
+window.addEventListener('load', () => {
+  el('txDate').value = new Date().toISOString().split('T')[0];
+  initAppSync();
+  updateLiveExchangeRates();
+  setInterval(updateLiveExchangeRates, 5*60*1000);
+});
+</script>
+</body>
+</html>
